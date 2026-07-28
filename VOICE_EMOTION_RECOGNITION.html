@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Emotion Recognizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, #0b1120 0%, #1b2a3a 100%);
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      padding: 1rem;
+    }
+    .glass-card {
+      max-width: 700px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 3.5rem;
+      padding: 2.5rem 2rem 3rem;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+      transition: 0.3s;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      color: #f0f7ff;
+      text-shadow: 0 4px 12px rgba(0, 10, 30, 0.5);
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    h1 span {
+      background: linear-gradient(135deg, #f6d5ff, #a7c0ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 700;
+    }
+    .sub {
+      color: #b0c9e8;
+      font-size: 1rem;
+      letter-spacing: 1px;
+      margin-bottom: 2.5rem;
+      opacity: 0.8;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.7rem;
+    }
+    .emotion-display {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 100px;
+      padding: 1rem 1.8rem;
+      margin-bottom: 2.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(4px);
+      transition: 0.3s;
+    }
+    .emotion-label {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #a1bbdd;
+    }
+    .emotion-value {
+      font-size: 3.8rem;
+      font-weight: 700;
+      line-height: 1.2;
+      min-height: 5rem;
+      color: #ffffff;
+      text-shadow: 0 0 20px rgba(120, 180, 255, 0.3);
+      transition: 0.2s;
+      word-break: break-word;
+    }
+    .emotion-value.neutral {
+      color: #b6cdff;
+    }
+    .emotion-value.happy {
+      color: #ffe484;
+    }
+    .emotion-value.sad {
+      color: #8cb2ff;
+    }
+    .emotion-value.angry {
+      color: #ff7e7e;
+    }
+    .emotion-value.fearful {
+      color: #d9b3ff;
+    }
+    .emotion-value.surprised {
+      color: #7fe0c0;
+    }
+    .emotion-value.disgusted {
+      color: #b5b58c;
+    }
+    .mic-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      margin: 1.8rem 0 1.5rem;
+    }
+    .mic-btn {
+      background: radial-gradient(circle at 30% 30%, #4d7cff, #1a3bb0);
+      border: none;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(30, 80, 200, 0.5), 0 0 0 0 rgba(70, 130, 255, 0.3);
+      transition: 0.25s ease;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .mic-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 16px 40px rgba(30, 80, 220, 0.7);
+    }
+    .mic-btn:active {
+      transform: scale(0.94);
+    }
+    .mic-btn.recording {
+      background: radial-gradient(circle at 30% 30%, #ff4d6d, #b01030);
+      box-shadow: 0 0 40px #ff3b5c, 0 0 80px #ff1a4f44;
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 #ff3b5c80; }
+      70% { box-shadow: 0 0 0 25px #ff3b5c00; }
+      100% { box-shadow: 0 0 0 0 #ff3b5c00; }
+    }
+    .mic-icon {
+      width: 46px;
+      height: 46px;
+      fill: white;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+    }
+    .status-text {
+      font-size: 1.1rem;
+      color: #d3e4ff;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 0.6rem 1.8rem;
+      border-radius: 40px;
+      backdrop-filter: blur(2px);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      min-height: 3.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      width: 100%;
+      max-width: 320px;
+    }
+    .status-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #4caf50;
+      margin-right: 8px;
+      transition: 0.3s;
+    }
+    .status-dot.inactive {
+      background: #6b7b93;
+    }
+    .status-dot.recording-dot {
+      background: #ff4d6d;
+      animation: blink 0.8s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem 2rem;
+      margin: 2rem 0 0.5rem;
+      font-size: 0.85rem;
+      color: #95b0d6;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding-top: 1.8rem;
+    }
+    .features span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 0.2rem 0.8rem;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .footnote {
+      margin-top: 2rem;
+      font-size: 0.7rem;
+      color: #5c7399;
+      letter-spacing: 0.4px;
+    }
+    .histogram-bar {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin: 1.5rem 0 0.5rem;
+      height: 36px;
+      align-items: flex-end;
+    }
+    .bar {
+      width: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px 10px 4px 4px;
+      transition: 0.25s;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .bar.active {
+      background: #4d7cff;
+      box-shadow: 0 -4px 12px #4d7cff66;
+    }
+    .bar.active.strong {
+      background: #ffb347;
+      box-shadow: 0 -4px 16px #ffb34777;
+    }
+    @media (max-width: 500px) {
+      .glass-card { padding: 2rem 1.2rem; }
+      .emotion-value { font-size: 2.8rem; }
+      .mic-btn { width: 90px; height: 90px; }
+      .mic-icon { width: 38px; height: 38px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glass-card">
+    <h1>
+      🎤 <span>Emotion</span>Sense
+    </h1>
+    <div class="sub">voice → emotion · real‑time</div>
+
+    <!-- emotion output -->
+    <div class="emotion-display">
+      <div class="emotion-label">detected emotion</div>
+      <div id="emotionValue" class="emotion-value neutral">—</div>
+    </div>
+
+    <!-- mic & status -->
+    <div class="mic-section">
+      <button id="micButton" class="mic-btn" aria-label="Start recording">
+        <svg class="mic-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 16c-2.206 0-4-1.794-4-4V6c0-2.206 1.794-4 4-4s4 1.794 4 4v6c0 2.206-1.794 4-4 4zm8-4h-2c0 2.607-2.122 4.5-4 4.5S10 14.607 10 12H8c0 3.157 2.416 5.5 5 5.944V20h-2v2h6v-2h-2v-2.056c2.584-.444 5-2.787 5-5.944z"/>
+        </svg>
+      </button>
+      <div class="status-text" id="statusMessage">
+        <span class="status-dot inactive" id="statusDot"></span>
+        <span id="statusLabel">Ready · click mic</span>
+      </div>
+    </div>
+
+    <!-- mini visual bars (playful) -->
+    <div class="histogram-bar" id="barContainer">
+      <div class="bar" id="bar1"></div>
+      <div class="bar" id="bar2"></div>
+      <div class="bar" id="bar3"></div>
+      <div class="bar" id="bar4"></div>
+      <div class="bar" id="bar5"></div>
+      <div class="bar" id="bar6"></div>
+    </div>
+
+    <div class="features">
+      <span>🧠 6 emotions</span>
+      <span>⚡ instant</span>
+      <span>🎙️ browser mic</span>
+    </div>
+    <div class="footnote">speak clearly · demo uses pitch & energy</div>
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // DOM elements
+      const emotionValue = document.getElementById('emotionValue');
+      const micButton = document.getElementById('micButton');
+      const statusLabel = document.getElementById('statusLabel');
+      const statusDot = document.getElementById('statusDot');
+      const bars = [
+        document.getElementById('bar1'),
+        document.getElementById('bar2'),
+        document.getElementById('bar3'),
+        document.getElementById('bar4'),
+        document.getElementById('bar5'),
+        document.getElementById('bar6')
+      ];
+
+      // state
+      let isRecording = false;
+      let audioContext = null;
+      let analyser = null;
+      let dataArray = null;
+      let animationFrame = null;
+      let mediaStream = null;
+
+      // ---------- emotion inference (simulated but based on real audio features) ----------
+      function inferEmotionFromFeatures(energy, pitch, spectralCentroid) {
+        // Simple rule-based classifier using energy (volume) and pitch (frequency) 
+        // and a bit of spectral centroid (brightness) for variety.
+        // Returns one of: happy, sad, angry, fearful, surprised, disgusted, neutral
+        
+        // Normalize rough ranges (energy 0-255, pitch 0-1000Hz approx, centroid 0-2000)
+        const normEnergy = Math.min(energy / 180, 1.2); 
+        const normPitch = Math.min(pitch / 600, 1.6);
+        const normCentroid = Math.min(spectralCentroid / 1200, 1.4);
+        
+        // combination heuristics (playful but somewhat meaningful)
+        const highEnergy = normEnergy > 0.45;
+        const lowEnergy = normEnergy < 0.18;
+        const highPitch = normPitch > 0.55;
+        const lowPitch = normPitch < 0.2;
+        const bright = normCentroid > 0.6;
+        const dark = normCentroid < 0.25;
+
+        // Decision tree
+        if (highEnergy && highPitch && bright) return 'happy';
+        if (highEnergy && lowPitch && !bright) return 'angry';
+        if (lowEnergy && lowPitch && dark) return 'sad';
+        if (highEnergy && highPitch && !bright) return 'surprised';
+        if (lowEnergy && highPitch && bright) return 'fearful';
+        if (lowEnergy && highPitch && dark) return 'disgusted';
+        if (lowEnergy && lowPitch && bright) return 'neutral';
+        if (highEnergy && !highPitch && bright) return 'happy'; 
+        if (lowEnergy && !lowPitch && dark) return 'sad';
+        
+        // fallback – map to neutral
+        return 'neutral';
+      }
+
+      // update UI with emotion
+      function updateEmotionUI(emotion) {
+        const emotionMap = {
+          'happy': '😊 Happy',
+          'sad': '😢 Sad',
+          'angry': '😠 Angry',
+          'fearful': '😨 Fearful',
+          'surprised': '😲 Surprised',
+          'disgusted': '🤢 Disgusted',
+          'neutral': '😐 Neutral'
+        };
+        const displayText = emotionMap[emotion] || '😐 Neutral';
+        emotionValue.textContent = displayText;
+        // remove all classes
+        emotionValue.className = 'emotion-value';
+        if (emotion === 'neutral') emotionValue.classList.add('neutral');
+        else if (emotion === 'happy') emotionValue.classList.add('happy');
+        else if (emotion === 'sad') emotionValue.classList.add('sad');
+        else if (emotion === 'angry') emotionValue.classList.add('angry');
+        else if (emotion === 'fearful') emotionValue.classList.add('fearful');
+        else if (emotion === 'surprised') emotionValue.classList.add('surprised');
+        else if (emotion === 'disgusted') emotionValue.classList.add('disgusted');
+      }
+
+      // update visual bars
+      function updateBars(energyPercent) {
+        const count = Math.floor(energyPercent * 6);
+        for (let i = 0; i < bars.length; i++) {
+          const bar = bars[i];
+          bar.className = 'bar';
+          if (i < count) {
+            bar.classList.add('active');
+            if (i > 2) bar.classList.add('strong');
+          }
+        }
+      }
+
+      // ---------- audio processing loop ----------
+      function processAudio() {
+        if (!analyser || !isRecording) return;
+
+        analyser.getByteTimeDomainData(dataArray);
+        // compute RMS (energy)
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const val = (dataArray[i] - 128) / 128; // normalize -1..1
+          sum += val * val;
+        }
+        const rms = Math.sqrt(sum / dataArray.length);
+        const energyPercent = Math.min(rms * 2.8, 1.0); 
+
+        // get frequency data for pitch & centroid (approximate)
+        const freqArray = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(freqArray);
+        
+        // estimate pitch: weighted average of frequency bins (rough)
+        let weightedSum = 0;
+        let totalWeight = 0;
+        for (let i = 0; i < freqArray.length; i++) {
+          const freq = (i * audioContext.sampleRate) / (2 * freqArray.length);
+          const weight = freqArray[i] / 255;
+          weightedSum += freq * weight;
+          totalWeight += weight;
+        }
+        const avgFreq = totalWeight > 0 ? weightedSum / totalWeight : 0;
+        // spectral centroid (brightness)
+        let centroidSum = 0;
+        let centroidWeight = 0;
+        for (let i = 0; i < freqArray.length; i++) {
+          const freq = (i * audioContext.sampleRate) / (2 * freqArray.length);
+          const weight = freqArray[i] / 255;
+          centroidSum += freq * weight;
+          centroidWeight += weight;
+        }
+        const spectralCentroid = centroidWeight > 0 ? centroidSum / centroidWeight : 0;
+
+        // infer emotion
+        const emotion = inferEmotionFromFeatures(
+          rms * 200,        // energy (scaled)
+          avgFreq, 
+          spectralCentroid
+        );
+        updateEmotionUI(emotion);
+        updateBars(energyPercent);
+
+        // continue loop
+        animationFrame = requestAnimationFrame(processAudio);
+      }
+
+      // ---------- start / stop recording ----------
+      async function startRecording() {
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioContext.createAnalyser();
+          analyser.fftSize = 512;
+          analyser.smoothingTimeConstant = 0.7;
+          const source = audioContext.createMediaStreamSource(mediaStream);
+          source.connect(analyser);
+          dataArray = new Uint8Array(analyser.fftSize);
+
+          // resume context if suspended
+          if (audioContext.state === 'suspended') {
+            await audioContext.resume();
+          }
+
+          isRecording = true;
+          micButton.classList.add('recording');
+          statusDot.className = 'status-dot recording-dot';
+          statusLabel.textContent = '🎙️ listening...';
+          // start processing
+          processAudio();
+        } catch (err) {
+          console.warn('Mic error:', err);
+          statusLabel.textContent = '❌ mic error';
+          statusDot.className = 'status-dot inactive';
+          resetRecordingState();
+        }
+      }
+
+      function stopRecording() {
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+          animationFrame = null;
+        }
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(track => track.stop());
+          mediaStream = null;
+        }
+        if (audioContext && audioContext.state !== 'closed') {
+          audioContext.close().catch(() => {});
+          audioContext = null;
+        }
+        analyser = null;
+        dataArray = null;
+        isRecording = false;
+        micButton.classList.remove('recording');
+        statusDot.className = 'status-dot inactive';
+        statusLabel.textContent = '⏹️ stopped';
+        // reset emotion to neutral?
+        updateEmotionUI('neutral');
+        // reset bars
+        for (let bar of bars) bar.className = 'bar';
+      }
+
+      function resetRecordingState() {
+        isRecording = false;
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+        animationFrame = null;
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(track => track.stop());
+          mediaStream = null;
+        }
+        if (audioContext && audioContext.state !== 'closed') {
+          audioContext.close().catch(() => {});
+          audioContext = null;
+        }
+        analyser = null;
+        dataArray = null;
+        micButton.classList.remove('recording');
+        statusDot.className = 'status-dot inactive';
+      }
+
+      // toggle recording
+      function toggleRecording() {
+        if (isRecording) {
+          stopRecording();
+          statusLabel.textContent = '⏸️ paused';
+          // after short delay, show ready
+          setTimeout(() => {
+            if (!isRecording) statusLabel.textContent = '🎤 ready';
+          }, 500);
+        } else {
+          startRecording();
+        }
+      }
+
+      // ---------- init event listener ----------
+      micButton.addEventListener('click', toggleRecording);
+
+      // clean up on page unload
+      window.addEventListener('beforeunload', function() {
+        if (isRecording) stopRecording();
+      });
+
+      // set initial status
+      statusLabel.textContent = '🎤 click mic';
+      updateEmotionUI('neutral');
+
+      // extra: handle context auto-start (Chrome)
+      document.addEventListener('click', function resumeAudio() {
+        if (audioContext && audioContext.state === 'suspended') {
+          audioContext.resume().catch(() => {});
+        }
+      }, { once: false });
+
+    })();
+  </script>
+</body>
+</html>
