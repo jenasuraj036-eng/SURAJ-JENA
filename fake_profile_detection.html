@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Profile Detection · Social Media</title>
+    <!-- Font awesome for subtle icons (optional but adds visual flair) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f6f9fc 0%, #e9f0f5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+        }
+
+        .card {
+            max-width: 820px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 48px;
+            padding: 2.5rem 2.8rem;
+            box-shadow: 0 25px 50px -10px rgba(0, 20, 30, 0.25),
+                        0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+            transition: all 0.2s ease;
+        }
+
+        @media (max-width: 560px) {
+            .card {
+                padding: 1.8rem 1.2rem;
+                border-radius: 32px;
+            }
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid rgba(0, 30, 40, 0.06);
+            padding-bottom: 1.2rem;
+        }
+
+        .header i {
+            font-size: 2.4rem;
+            color: #1e4a6b;
+            background: rgba(30, 74, 107, 0.08);
+            padding: 0.6rem;
+            border-radius: 20px;
+        }
+
+        .header h1 {
+            font-weight: 700;
+            font-size: 1.9rem;
+            letter-spacing: -0.02em;
+            color: #0b2a3b;
+        }
+
+        .header .badge {
+            margin-left: auto;
+            background: #1e4a6b;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.4rem 1rem;
+            border-radius: 60px;
+            letter-spacing: 0.3px;
+            background: #1f5a7a;
+            box-shadow: 0 4px 8px rgba(0,40,60,0.1);
+        }
+
+        .sub {
+            color: #2d4e66;
+            font-weight: 450;
+            margin-top: -0.8rem;
+            margin-bottom: 2rem;
+            padding-left: 0.25rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .sub i {
+            color: #2f6f8f;
+            font-size: 0.9rem;
+        }
+
+        /* profile preview */
+        .profile-preview {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            background: rgba(255,255,255,0.5);
+            padding: 1.8rem 1.8rem;
+            border-radius: 32px;
+            margin-bottom: 2rem;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 6px 14px rgba(0, 20, 30, 0.04);
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #a0c4d9, #5682a3);
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.6rem;
+            font-weight: 500;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 8px 14px rgba(0,40,60,0.12);
+            transition: 0.2s;
+        }
+
+        .preview-info {
+            flex: 1;
+        }
+
+        .preview-info .name {
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #0b2a3b;
+            letter-spacing: -0.3px;
+        }
+
+        .preview-info .handle {
+            color: #39647f;
+            font-weight: 500;
+            font-size: 0.95rem;
+            background: rgba(0,0,0,0.02);
+            padding: 0.2rem 0.8rem 0.2rem 0;
+            display: inline-block;
+        }
+
+        .preview-info .stats {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #1e4057;
+            flex-wrap: wrap;
+        }
+
+        .preview-info .stats span {
+            background: rgba(0,0,0,0.02);
+            padding: 0.2rem 0.6rem 0.2rem 0;
+            border-radius: 30px;
+        }
+
+        .preview-info .stats i {
+            margin-right: 5px;
+            color: #3b6f8f;
+            width: 1.1rem;
+        }
+
+        .divider {
+            border: none;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(30, 74, 107, 0.08), transparent);
+            margin: 1.2rem 0 1.8rem 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem 1.8rem;
+        }
+
+        @media (max-width: 620px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #1f4a64;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-group label i {
+            font-size: 0.8rem;
+            color: #477a9c;
+        }
+
+        .form-group input, .form-group select {
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(30, 74, 107, 0.15);
+            border-radius: 60px;
+            padding: 0.8rem 1.2rem;
+            font-size: 0.95rem;
+            transition: 0.2s;
+            backdrop-filter: blur(4px);
+            color: #0a2637;
+            font-weight: 450;
+            width: 100%;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: 2px solid #2b6d92;
+            outline-offset: 2px;
+            border-color: transparent;
+            background: white;
+        }
+
+        .form-group input::placeholder {
+            color: #7a9bb3;
+            font-weight: 350;
+            opacity: 0.7;
+        }
+
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin: 2.2rem 0 1.2rem 0;
+            gap: 1rem;
+        }
+
+        .btn {
+            background: #1f5a7a;
+            border: none;
+            padding: 0.9rem 2.6rem;
+            border-radius: 60px;
+            font-weight: 600;
+            color: white;
+            font-size: 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 10px 20px -8px rgba(20, 70, 100, 0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .btn:hover {
+            background: #124257;
+            transform: scale(1.01) translateY(-2px);
+            box-shadow: 0 18px 28px -10px #1e4a6b60;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn i {
+            font-size: 1.1rem;
+        }
+
+        .btn-secondary {
+            background: rgba(30, 74, 107, 0.06);
+            color: #1f4a64;
+            box-shadow: none;
+            border: 1px solid rgba(30, 74, 107, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(30, 74, 107, 0.12);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.02);
+        }
+
+        .result-box {
+            margin-top: 2rem;
+            padding: 1.4rem 1.8rem;
+            border-radius: 40px;
+            background: rgba(255,255,255,0.4);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.7);
+            transition: 0.25s ease;
+        }
+
+        .result-box .risk-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 650;
+            font-size: 1.1rem;
+            color: #0f3348;
+        }
+
+        .result-box .risk-header i {
+            font-size: 1.8rem;
+        }
+
+        .result-detail {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.6rem;
+        }
+
+        .risk-score {
+            background: rgba(0,0,0,0.02);
+            padding: 0.4rem 1.2rem;
+            border-radius: 80px;
+            font-weight: 600;
+            font-size: 1.3rem;
+            color: #0a2a3e;
+        }
+
+        .risk-badge {
+            padding: 0.3rem 1.6rem;
+            border-radius: 60px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.4px;
+        }
+
+        .risk-low { background: #d4edda; color: #0e4b2b; }
+        .risk-moderate { background: #fff3cd; color: #6b4d0a; }
+        .risk-high { background: #f8d7da; color: #7a2a2a; }
+
+        .footnote {
+            margin-top: 1.2rem;
+            color: #3c667e;
+            font-size: 0.8rem;
+            display: flex;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+            border-top: 1px solid rgba(0,0,0,0.04);
+            padding-top: 1rem;
+        }
+
+        .footnote i {
+            color: #457a9c;
+            margin-right: 6px;
+        }
+
+        /* inline alert */
+        .alert-message {
+            padding: 0.3rem 0 0 0.2rem;
+            font-size: 0.8rem;
+            color: #b34a4a;
+        }
+
+        .hide { display: none; }
+
+        .fake-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 20px;
+            margin-right: 4px;
+        }
+
+        /* responsive tweaks */
+        .flex-center {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <i class="fas fa-user-shield"></i>
+        <h1>Profile Inspector</h1>
+        <span class="badge"><i class="fas fa-robot" style="margin-right: 6px;"></i>AI · beta</span>
+    </div>
+    <div class="sub">
+        <i class="fas fa-shield-alt"></i> 
+        <span>Fake profile detection · social media risk analysis</span>
+    </div>
+
+    <!-- profile preview (dynamic) -->
+    <div class="profile-preview" id="profilePreview">
+        <div class="avatar" id="avatarDisplay">JD</div>
+        <div class="preview-info">
+            <div class="name" id="previewName">Jane Doe</div>
+            <div class="handle" id="previewHandle"><i class="fas fa-at"></i> @janedoe_social</div>
+            <div class="stats">
+                <span><i class="fas fa-user-friends"></i> <span id="previewFollowers">1.2k</span></span>
+                <span><i class="fas fa-calendar-alt"></i> <span id="previewJoined">2020</span></span>
+                <span><i class="fas fa-check-circle" style="color: #2b7a4b;"></i> <span id="previewVerified">unverified</span></span>
+            </div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- input form -->
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="username"><i class="fas fa-user-circle"></i> Username</label>
+            <input type="text" id="username" placeholder="@ or full name" value="jane_doe_social">
+        </div>
+        <div class="form-group">
+            <label for="followers"><i class="fas fa-user-friends"></i> Followers</label>
+            <input type="number" id="followers" placeholder="e.g. 1200" value="1200">
+        </div>
+        <div class="form-group">
+            <label for="following"><i class="fas fa-user-plus"></i> Following</label>
+            <input type="number" id="following" placeholder="e.g. 2400" value="2400">
+        </div>
+        <div class="form-group">
+            <label for="posts"><i class="fas fa-image"></i> Posts</label>
+            <input type="number" id="posts" placeholder="e.g. 45" value="45">
+        </div>
+        <div class="form-group">
+            <label for="joinYear"><i class="fas fa-calendar-alt"></i> Join year</label>
+            <select id="joinYear">
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+                <option value="2021">2021</option>
+                <option value="2020" selected>2020</option>
+                <option value="2019">2019</option>
+                <option value="2018">2018</option>
+                <option value="2017">2017</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="verified"><i class="fas fa-check-circle"></i> Verified</label>
+            <select id="verified">
+                <option value="false">Unverified</option>
+                <option value="true">Verified</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="action-row">
+        <button class="btn" id="detectBtn"><i class="fas fa-robot"></i> Analyze profile</button>
+        <button class="btn btn-secondary" id="resetBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+    </div>
+
+    <!-- result area -->
+    <div class="result-box" id="resultBox">
+        <div class="risk-header">
+            <i class="fas fa-shield-virus" style="color: #2b6d92;"></i> 
+            <span>Risk assessment</span>
+        </div>
+        <div class="result-detail">
+            <span class="risk-score" id="riskScore">—</span>
+            <span class="risk-badge" id="riskBadge">waiting</span>
+        </div>
+        <div style="margin-top: 0.8rem; font-size: 0.95rem; color: #1b4058;" id="riskReason">
+            <i class="fas fa-info-circle" style="margin-right: 8px;"></i> 
+            Adjust profile data and run analysis.
+        </div>
+        <div class="footnote">
+            <span><i class="fas fa-database"></i> 6 signals analyzed</span>
+            <span><i class="fas fa-microchip"></i> heuristic detection</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const usernameInput = document.getElementById('username');
+        const followersInput = document.getElementById('followers');
+        const followingInput = document.getElementById('following');
+        const postsInput = document.getElementById('posts');
+        const joinYearSelect = document.getElementById('joinYear');
+        const verifiedSelect = document.getElementById('verified');
+
+        const previewName = document.getElementById('previewName');
+        const previewHandle = document.getElementById('previewHandle');
+        const previewFollowers = document.getElementById('previewFollowers');
+        const previewJoined = document.getElementById('previewJoined');
+        const previewVerified = document.getElementById('previewVerified');
+        const avatarDisplay = document.getElementById('avatarDisplay');
+
+        const riskScoreSpan = document.getElementById('riskScore');
+        const riskBadge = document.getElementById('riskBadge');
+        const riskReason = document.getElementById('riskReason');
+
+        // function to update preview
+        function updatePreview() {
+            const name = usernameInput.value.trim() || 'Anonymous';
+            const displayName = name.length > 18 ? name.slice(0, 16) + '…' : name;
+            previewName.textContent = displayName;
+            // handle (at) 
+            const handleRaw = name.replace(/\s+/g, '_').toLowerCase() || 'user';
+            previewHandle.innerHTML = `<i class="fas fa-at"></i> @${handleRaw}`;
+            // followers
+            const followers = followersInput.value.trim() || '0';
+            const followerDisplay = parseInt(followers, 10) >= 1000 ? (parseInt(followers,10)/1000).toFixed(1) + 'k' : followers;
+            previewFollowers.textContent = followerDisplay;
+            // join year
+            const year = joinYearSelect.value || '2020';
+            previewJoined.textContent = year;
+            // verified
+            const verified = verifiedSelect.value === 'true' ? 'verified' : 'unverified';
+            previewVerified.textContent = verified;
+            previewVerified.style.color = verified === 'verified' ? '#1f7a4a' : '#6f7f8a';
+            // avatar initials
+            const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2) || 'U';
+            avatarDisplay.textContent = initials;
+        }
+
+        // detection logic (heuristic)
+        function analyzeRisk() {
+            // gather values
+            const username = usernameInput.value.trim() || '';
+            const followers = parseInt(followersInput.value, 10) || 0;
+            const following = parseInt(followingInput.value, 10) || 0;
+            const posts = parseInt(postsInput.value, 10) || 0;
+            const joinYear = parseInt(joinYearSelect.value, 10) || 2020;
+            const verified = verifiedSelect.value === 'true';
+
+            // base score from 0 to 100 (higher = more fake)
+            let score = 0;
+            let reasons = [];
+
+            // 1. follow ratio (fake accounts often follow many but have few followers)
+            if (followers === 0 && following > 50) {
+                score += 25;
+                reasons.push('Zero followers with high following');
+            } else if (following > 0 && followers > 0) {
+                const ratio = following / followers;
+                if (ratio > 5) {
+                    score += 20;
+                    reasons.push('Following/follower ratio > 5');
+                } else if (ratio > 2.5) {
+                    score += 10;
+                    reasons.push('Following/follower ratio > 2.5');
+                }
+            } else if (followers === 0 && following === 0) {
+                score += 10;
+                reasons.push('No followers and no following');
+            }
+
+            // 2. posts: too few posts for old account or too many for new
+            const currentYear = new Date().getFullYear();
+            const accountAge = currentYear - joinYear;
+            if (accountAge <= 1 && posts > 200) {
+                score += 20;
+                reasons.push('New account (<1y) with >200 posts');
+            } else if (accountAge >= 3 && posts < 5) {
+                score += 15;
+                reasons.push('Old account (>3y) with very few posts');
+            } else if (accountAge >= 2 && posts < 10) {
+                score += 8;
+                reasons.push('Account >2y with <10 posts');
+            }
+
+            // 3. verified: unverified accounts are more likely fake? but not strong
+            if (!verified && followers > 5000) {
+                score += 5;
+                reasons.push('Unverified account with high followers');
+            }
+            if (!verified && following > 3000 && followers < 200) {
+                score += 12;
+                reasons.push('Unverified, high following, low followers');
+            }
+
+            // 4. username suspicious (contains numbers, underscores, length)
+            if (username.length < 4) {
+                score += 10;
+                reasons.push('Very short username (<4 chars)');
+            }
+            if (/^[0-9]+$/.test(username)) {
+                score += 15;
+                reasons.push('Username is only numbers');
+            }
+            if (username.includes('_') && username.length > 10) {
+                score += 5;
+                reasons.push('Long username with underscores'
