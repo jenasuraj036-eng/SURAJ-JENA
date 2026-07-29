@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<!-- saved from url=(0117)file:///C:/Users/jenas/OneDrive/Desktop/suraj.project/human%20emotion%20recognition%20from%20facial%20expression.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Facial Emotion Recognition</title>
+    <!-- TensorFlow.js and the face-landmarks model -->
+    <script src="./Real-time Facial Emotion Recognition_files/tfjs@latest"></script>
+    <script src="./Real-time Facial Emotion Recognition_files/face-landmarks-detection@latest"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: linear-gradient(145deg, #0b0e1a 0%, #1a1f2f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(22, 28, 46, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 48px;
+            padding: 32px 28px;
+            max-width: 720px;
+            width: 100%;
+            box-shadow: 0 25px 50px -8px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+            transition: all 0.2s;
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: #f0f3fa;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        .sub {
+            text-align: center;
+            color: #8d99c9;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #2e3755;
+            padding-bottom: 16px;
+        }
+        .video-wrapper {
+            position: relative;
+            border-radius: 28px;
+            overflow: hidden;
+            background: #0f121f;
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.6);
+        }
+        video {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            transform: scaleX(-1); /* mirror for natural self-view */
+        }
+        #overlay-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            transform: scaleX(-1);
+        }
+        .emotion-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #141b2b;
+            margin-top: 20px;
+            padding: 16px 22px;
+            border-radius: 60px;
+            border: 1px solid #2d3657;
+            backdrop-filter: blur(4px);
+        }
+        .emotion-label {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #d6defa;
+            letter-spacing: 0.3px;
+        }
+        .emotion-label span {
+            color: #a8b5ee;
+            font-weight: 300;
+            font-size: 1rem;
+            margin-left: 8px;
+        }
+        .confidence-bar-bg {
+            width: 140px;
+            height: 8px;
+            background: #252e4a;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .confidence-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #6c7cff, #a78bfa);
+            border-radius: 20px;
+            transition: width 0.25s ease;
+        }
+        .confidence-text {
+            color: #b9c4f0;
+            font-size: 0.9rem;
+            font-variant-numeric: tabular-nums;
+            min-width: 48px;
+            text-align: right;
+        }
+        .status {
+            text-align: center;
+            margin-top: 16px;
+            color: #6f7bb0;
+            font-size: 0.85rem;
+        }
+        .status .highlight {
+            color: #b7c4ff;
+            font-weight: 500;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px;
+            justify-content: center;
+        }
+        .btn {
+            background: #232d4a;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 40px;
+            font-weight: 500;
+            color: #d0daf5;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid #38416a;
+        }
+        .btn:hover {
+            background: #2f3b62;
+            border-color: #5f72b0;
+            color: white;
+            transform: scale(1.02);
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn-primary {
+            background: #4f5fbe;
+            border-color: #6a7edb;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5f70d1;
+        }
+        .footer-note {
+            margin-top: 14px;
+            font-size: 0.7rem;
+            color: #4c5783;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
+        @media (max-width: 480px) {
+            .card { padding: 20px 14px; }
+            .emotion-result { flex-wrap: wrap; gap: 10px; }
+            .confidence-bar-bg { width: 100px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>😊 Emotion Reader</h1>
+    <div class="sub">Real-time facial expression analysis</div>
+
+    <div class="video-wrapper">
+        <video id="webcam" autoplay="" playsinline=""></video>
+        <canvas id="overlay-canvas" width="664" height="498"></canvas>
+    </div>
+
+    <div class="emotion-result">
+        <div class="emotion-label">
+            <span id="emotion-name">Neutral</span>
+            <span id="emotion-emoji">😐</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <div class="confidence-bar-bg">
+                <div class="confidence-fill" id="confidence-fill" style="width: 10%;"></div>
+            </div>
+            <span class="confidence-text" id="confidence-text">10%</span>
+        </div>
+    </div>
+
+    <div class="status" id="status-message"><span style="color:#f78b8b;">⚠️ Camera error: Permission dismissed</span></div>
+
+    <div class="btn-group">
+        <button class="btn" id="toggle-btn">⏸️ Pause</button>
+        <button class="btn btn-primary" id="reset-btn">⟳ Restart</button>
+    </div>
+    <div class="footer-note">Model: face-landmarks-detection • expressions mapped via heuristic rules</div>
+</div>
+
+<script>
+    (function() {
+        // ----- configuration -----
+        const EMOTION_MAP = {
+            'angry': { label: 'Angry', emoji: '😠' },
+            'disgusted': { label: 'Disgusted', emoji: '🤢' },
+            'fearful': { label: 'Fearful', emoji: '😨' },
+            'happy': { label: 'Happy', emoji: '😄' },
+            'neutral': { label: 'Neutral', emoji: '😐' },
+            'sad': { label: 'Sad', emoji: '😢' },
+            'surprised': { label: 'Surprised', emoji: '😮' }
+        };
+
+        // ----- DOM refs -----
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('overlay-canvas');
+        const ctx = canvas.getContext('2d');
+
+        const emotionNameEl = document.getElementById('emotion-name');
+        const emotionEmojiEl = document.getElementById('emotion-emoji');
+        const confidenceFill = document.getElementById('confidence-fill');
+        const confidenceText = document.getElementById('confidence-text');
+        const statusMsg = document.getElementById('status-message');
+
+        const toggleBtn = document.getElementById('toggle-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // ----- state -----
+        let isRunning = true;
+        let isModelLoaded = false;
+        let detector = null;
+        let animationId = null;
+        let lastEmotion = 'neutral';
+        let lastConfidence = 0;
+
+        // ----- helper: resize canvas -----
+        function resizeCanvas() {
+            const rect = video.getBoundingClientRect();
+            canvas.width = rect.width || 640;
+            canvas.height = rect.height || 480;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // ----- heuristic emotion from key landmarks (simplified but effective) -----
+        function estimateEmotion(landmarks) {
+            // landmarks: array of 468 3D points (x,y,z) normalized [0,1]
+            if (!landmarks || landmarks.length < 468) return { emotion: 'neutral', confidence: 0.3 };
+
+            // extract useful indices (based on MediaPipe Face Mesh)
+            const leftEye = landmarks[33];
+            const rightEye = landmarks[263];
+            const noseTip = landmarks[1];
+            const mouthLeft = landmarks[61];
+            const mouthRight = landmarks[291];
+            const mouthTop = landmarks[13];
+            const mouthBottom = landmarks[14];
+            const leftBrow = landmarks[55];
+            const rightBrow = landmarks[285];
+            const leftCheek = landmarks[117];
+            const rightCheek = landmarks[352];
+
+            // ---- compute features ----
+            const eyeOpenness = (Math.abs(leftEye.y - landmarks[159].y) + Math.abs(rightEye.y - landmarks[386].y)) / 2;
+            const mouthOpenness = Math.abs(mouthTop.y - mouthBottom.y);
+            const mouthWidth = Math.abs(mouthLeft.x - mouthRight.x);
+            const browHeight = (leftBrow.y + rightBrow.y) / 2;
+            const noseY = noseTip.y;
+
+            // normalize (rough baseline)
+            const normEye = Math.min(eyeOpenness * 4, 1.2);
+            const normMouth = Math.min(mouthOpenness * 6, 1.0);
+            const normBrow = Math.min((browHeight - 0.3) * 3, 0.9);
+
+            // ---- rules (tuned for this demo) ----
+            let scores = {
+                happy: 0.1,
+                sad: 0.1,
+                angry: 0.1,
+                surprised: 0.1,
+                fearful: 0.1,
+                disgusted: 0.1,
+                neutral: 0.4
+            };
+
+            // happy: mouth wide, raised cheeks, brows neutral
+            if (mouthWidth > 0.12 && normMouth > 0.2 && normEye > 0.2) {
+                scores.happy += 0.5 + (mouthWidth * 1.2);
+                scores.neutral -= 0.2;
+            }
+            // surprise: wide eyes + open mouth
+            if (normEye > 0.5 && normMouth > 0.4) {
+                scores.surprised += 0.6;
+                scores.neutral -= 0.3;
+            }
+            // sadness: droopy brows, slight mouth drop, eyes less open
+            if (normBrow < 0.2 && normEye < 0.3 && normMouth < 0.2) {
+                scores.sad += 0.5;
+                scores.neutral -= 0.3;
+            }
+            // anger: brows down, eyes narrow, mouth tight
+            if (normBrow < 0.15 && normEye < 0.25 && mouthWidth < 0.08) {
+                scores.angry += 0.6;
+                scores.neutral -= 0.2;
+            }
+            // fear: brows raised, eyes wide, mouth slightly open
+            if (normBrow > 0.6 && normEye > 0.4 && normMouth > 0.2 && normMouth < 0.5) {
+                scores.fearful += 0.5;
+            }
+            // disgust: nose wrinkle (simulated: noseY + narrow eyes + mouth tension)
+            if (normEye < 0.3 && mouthWidth < 0.09 && mouthOpenness < 0.02) {
+                scores.disgusted += 0.5;
+            }
+
+            // clamp and find max
+            let maxScore = 0;
+            let maxEmotion = 'neutral';
+            for (const [em, score] of Object.entries(scores)) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    maxEmotion = em;
+                }
+            }
+
+            // confidence: softmax-like
+            const total = Object.values(scores).reduce((a, b) => a + b, 0.01);
+            const confidence = Math.min((maxScore / total) * 0.9 + 0.1, 0.98);
+
+            return { emotion: maxEmotion, confidence };
+        }
+
+        // ----- process face landmarks -----
+        function processFaces(landmarksArray) {
+            if (!landmarksArray || landmarksArray.length === 0) {
+                updateUI('neutral', 0.15);
+                return;
+            }
+            // take the first detected face
+            const face = landmarksArray[0];
+            const landmarks = face.landmarks || face.scaledMesh || face.mesh || face;
+            if (!landmarks || landmarks.length < 100) {
+                updateUI('neutral', 0.1);
+                return;
+            }
+            const result = estimateEmotion(landmarks);
+            updateUI(result.emotion, result.confidence);
+        }
+
+        // ----- update UI -----
+        function updateUI(emotionKey, confidence) {
+            const info = EMOTION_MAP[emotionKey] || EMOTION_MAP.neutral;
+            emotionNameEl.textContent = info.label;
+            emotionEmojiEl.textContent = info.emoji;
+            const percent = Math.round(confidence * 100);
+            confidenceFill.style.width = percent + '%';
+            confidenceText.textContent = percent + '%';
+            lastEmotion = emotionKey;
+            lastConfidence = confidence;
+        }
+
+        // ----- draw face mesh (for visual feedback) -----
+        function drawLandmarks(landmarksArray) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!landmarksArray || landmarksArray.length === 0) return;
+            const face = landmarksArray[0];
+            const landmarks = face.landmarks || face.scaledMesh || face.mesh || face;
+            if (!landmarks || landmarks.length < 100) return;
+
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.fillStyle = 'rgba(120, 140, 255, 0.25)';
+            ctx.strokeStyle = '#7a8cff';
+            ctx.lineWidth = 1.8;
+            ctx.shadowColor = 'rgba(120, 160, 255, 0.3)';
+            ctx.shadowBlur = 8;
+
+            // draw key points (subset)
+            const keyIndices = [33, 263, 61, 291, 13, 14, 55, 285, 1, 117, 352, 159, 386];
+            for (const idx of keyIndices) {
+                if (idx >= landmarks.length) continue;
+                const p = landmarks[idx];
+                const x = p.x * w;
+                const y = p.y * h;
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                ctx.fillStyle = '#b2c2ff';
+                ctx.shadowBlur = 12;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            // draw a simple bounding box
+            let minX = 1, minY = 1, maxX = 0, maxY = 0;
+            for (let i = 0; i < 468; i++) {
+                const p = landmarks[i];
+                if (!p) continue;
+                if (p.x < minX) minX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y > maxY) maxY = p.y;
+            }
+            if (maxX > minX) {
+                const pad = 0.04;
+                ctx.strokeStyle = 'rgba(150, 180, 255, 0.35)';
+                ctx.lineWidth = 1.5;
+                ctx.shadowBlur = 0;
+                ctx.strokeRect(
+                    (minX - pad) * w, (minY - pad) * h,
+                    (maxX - minX + pad * 2) * w,
+                    (maxY - minY + pad * 2) * h
+                );
+            }
+        }
+
+        // ----- main detection loop -----
+        async function detectLoop() {
+            if (!isRunning) {
+                animationId = requestAnimationFrame(detectLoop);
+                return;
+            }
+            if (!detector || !isModelLoaded) {
+                animationId = requestAnimationFrame(detectLoop);
+                return;
+            }
+            try {
+                const faces = await detector.estimateFaces(video, { flipHorizontal: false });
+                if (faces && faces.length > 0) {
+                    processFaces(faces);
+                    drawLandmarks(faces);
+                } else {
+                    updateUI('neutral', 0.1);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            } catch (err) {
+                // silent fail
+            }
+            animationId = requestAnimationFrame(detectLoop);
+        }
+
+        // ----- load model and start -----
+        async function initDetector() {
+            statusMsg.innerHTML = '<span class="highlight">⏳</span> Loading face model...';
+            try {
+                const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
+                detector = await faceLandmarksDetection.createDetector(model, {
+                    runtime: 'tfjs',
+                    maxFaces: 1,
+                    refineLandmarks: true,
+                });
+                isModelLoaded = true;
+                statusMsg.innerHTML = '<span class="highlight">✅</span> Model ready — camera active.';
+                startCamera();
+            } catch (err) {
+                statusMsg.innerHTML = `<span style="color:#f78b8b;">⚠️ Model load error: ${err.message || 'unknown'}</span>`;
+                console.error(err);
+            }
+        }
+
+        // ----- camera -----
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } });
+                video.srcObject = stream;
+                await video.play();
+                resizeCanvas();
+                statusMsg.innerHTML = '<span class="highlight">🟢</span> Running — look at the camera.';
+                if (!animationId) detectLoop();
+            } catch (err) {
+                statusMsg.innerHTML = `<span style="color:#f78b8b;">⚠️ Camera error: ${err.message}</span>`;
+                console.error(err);
+            }
+        }
+
+        // ----- toggle pause -----
+        function togglePause() {
+            isRunning = !isRunning;
+            toggleBtn.textContent = isRunning ? '⏸️ Pause' : '▶️ Resume';
+            statusMsg.innerHTML = isRunning
+                ? '<span class="highlight">🟢</span> Running — look at the camera.'
+                : '<span class="highlight">⏸️</span> Paused — click Resume.';
+            if (isRunning && !animationId) {
+                detectLoop();
+            }
+        }
+
+        // ----- restart -----
+        function restart() {
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(t => t.stop());
+                video.srcObject = null;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            isRunning = true;
+            toggleBtn.textContent = '⏸️ Pause';
+            statusMsg.innerHTML = '<span class="highlight">⟳</span> Restarting...';
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            initDetector();
+        }
+
+        // ----- event listeners -----
+        toggleBtn.addEventListener('click', togglePause);
+        resetBtn.addEventListener('click', restart);
+
+        // ----- start -----
+        initDetector();
+    })();
+</script>
+
+</body></html>
