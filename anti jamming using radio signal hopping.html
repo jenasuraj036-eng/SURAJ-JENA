@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anti‑Jamming · Radio Hopping</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0a1420 0%, #182a3a 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 2.8rem;
+      padding: 2rem 2rem 2.2rem;
+      max-width: 1100px;
+      width: 100%;
+      box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    h1 {
+      font-weight: 400;
+      font-size: 2rem;
+      letter-spacing: -0.3px;
+      color: #e8f4ff;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    h1 i {
+      color: #4fc3ff;
+      font-size: 2.2rem;
+      filter: drop-shadow(0 0 8px #1e8cff);
+    }
+
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 800px) {
+      .grid-2col {
+        grid-template-columns: 1fr;
+        gap: 1.8rem;
+      }
+    }
+
+    /* spectrum panel */
+    .spectrum-panel {
+      background: #0b1a2a;
+      border-radius: 2rem;
+      padding: 1.2rem 1.2rem 1rem;
+      box-shadow: inset 0 6px 14px rgba(0,0,0,0.6), 0 8px 20px rgba(0,0,0,0.3);
+      border: 1px solid #23445e;
+    }
+
+    .canvas-wrapper {
+      background: #07121f;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      aspect-ratio: 16 / 9;
+      border: 1px solid #23445e;
+      position: relative;
+    }
+
+    #spectrumCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #07121f;
+      image-rendering: pixelated;
+    }
+
+    .hop-indicator {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.9rem;
+      padding: 0.25rem 1rem 0.25rem 1.2rem;
+      background: #102b3d;
+      border-radius: 40px;
+      border: 1px solid #2d526b;
+      color: #b6d4f0;
+    }
+
+    .hop-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .frequency-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #2ecc71;
+      box-shadow: 0 0 10px #2ecc71;
+      transition: 0.2s;
+    }
+
+    .frequency-dot.jammed {
+      background: #e67e22;
+      box-shadow: 0 0 16px #e67e22;
+    }
+
+    .frequency-dot.critical {
+      background: #e74c3c;
+      box-shadow: 0 0 20px #e74c3c;
+    }
+
+    /* control panel */
+    .control-panel {
+      background: #0f2233;
+      border-radius: 2rem;
+      padding: 1.6rem 1.8rem;
+      border: 1px solid #23445e;
+      box-shadow: inset 0 4px 10px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .control-group label {
+      font-weight: 400;
+      color: #b6d4f0;
+      font-size: 0.9rem;
+      letter-spacing: 0.2px;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .control-group label i {
+      color: #4fc3ff;
+      width: 1.4rem;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 10px;
+      background: #1a3a52;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4fc3ff;
+      cursor: pointer;
+      box-shadow: 0 0 14px #1e8cff;
+      border: 2px solid #b0daff;
+    }
+
+    .value-indicator {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #8bb4d9;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      margin-top: 0.2rem;
+    }
+
+    .btn {
+      background: #1a3a52;
+      border: none;
+      color: #e2f0ff;
+      padding: 0.7rem 1.2rem;
+      border-radius: 40px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: 0.15s;
+      border: 1px solid #36617e;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      flex: 1 1 auto;
+      justify-content: center;
+    }
+
+    .btn i {
+      color: #7fc9ff;
+    }
+
+    .btn:hover {
+      background: #214f6b;
+      transform: scale(0.97);
+      border-color: #5d8fb0;
+    }
+
+    .btn-primary {
+      background: #1f6e9e;
+      border-color: #4a9cd6;
+      box-shadow: 0 0 16px #1f6e9e55;
+    }
+
+    .btn-primary i {
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2b7fb3;
+    }
+
+    .metrics {
+      display: flex;
+      justify-content: space-between;
+      background: #0a1b2b;
+      border-radius: 60px;
+      padding: 0.5rem 1.2rem;
+      border: 1px solid #23445e;
+    }
+
+    .metric-item {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+      color: #b6d4f0;
+      font-size: 0.9rem;
+    }
+
+    .metric-value {
+      font-weight: 600;
+      color: #ddf0ff;
+      font-size: 1.1rem;
+    }
+
+    .metric-value.hop {
+      color: #5fc3ff;
+    }
+
+    .footer-note {
+      text-align: right;
+      font-size: 0.8rem;
+      color: #4a6f8a;
+      margin-top: 1.2rem;
+      border-top: 1px solid #1a3650;
+      padding-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .footer-note i {
+      color: #3f7fa0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="glass-card">
+  <h1>
+    <i class="fas fa-broadcast-tower"></i> 
+    Anti‑Jamming · Radio Hopping
+  </h1>
+
+  <div class="grid-2col">
+    <!-- spectrum canvas -->
+    <div class="spectrum-panel">
+      <div class="canvas-wrapper">
+        <canvas id="spectrumCanvas" width="800" height="450"></canvas>
+      </div>
+      <div class="hop-indicator">
+        <span class="hop-badge">
+          <span class="frequency-dot" id="hopLed"></span>
+          <span id="hopStatus">Hopping active</span>
+        </span>
+        <span><i class="fas fa-exchange-alt" style="color:#4fc3ff;"></i>  freq. hopping</span>
+      </div>
+    </div>
+
+    <!-- controls -->
+    <div class="control-panel">
+      <div class="control-group">
+        <label><i class="fas fa-bolt"></i> Jamming power</label>
+        <input type="range" id="jammerSlider" min="0" max="100" value="28">
+        <div class="value-indicator">
+          <span>low</span>
+          <span id="jammerValue">28%</span>
+          <span>high</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label><i class="fas fa-random"></i> Hopping rate</label>
+        <input type="range" id="hopRateSlider" min="1" max="20" value="8">
+        <div class="value-indicator">
+          <span>slow</span>
+          <span id="hopRateValue">8</span>
+          <span>fast</span>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="hopNowBtn"><i class="fas fa-sync-alt"></i> Hop now</button>
+        <button class="btn" id="resetSpectrumBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+        <button class="btn" id="randomJamBtn"><i class="fas fa-random"></i> Random jam</button>
+      </div>
+
+      <div class="metrics">
+        <span class="metric-item"><i class="fas fa-wave-square"></i> Channel <span class="metric-value hop" id="currentChannel">4</span></span>
+        <span class="metric-item"><i class="fas fa-shield-alt"></i> Jamming <span class="metric-value" id="jamLevelMetric">28%</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    <span><i class="fas fa-satellite"></i>  frequency hopping · anti‑jamming · real‑time</span>
+    <span><i class="fas fa-circle" style="color: #2ecc71; font-size: 0.6rem;"></i>  adaptive hopping</span>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const canvas = document.getElementById('spectrumCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = 800, H = 450;
+
+    // ---- state ----
+    let channels = 12;                // number of frequency bins
+    let currentChannel = 4;           // 0-indexed
+    let hopRate = 8;                 // hops per second (simulated)
+    let jammerPower = 28;            // 0-100
+    let time = 0;
+
+    // background spectrum (signal + noise floor)
+    let baseSpectrum = new Float32Array(channels);
+    let jammedSpectrum = new Float32Array(channels);
+
+    // UI elements
+    const jammerSlider = document.getElementById('jammerSlider');
+    const hopRateSlider = document.getElementById('hopRateSlider');
+    const jammerValue = document.getElementById('jammerValue');
+    const hopRateValue = document.getElementById('hopRateValue');
+    const hopLed = document.getElementById('hopLed');
+    const hopStatus = document.getElementById('hopStatus');
+    const currentChannelSpan = document.getElementById('currentChannel');
+    const jamLevelMetric = document.getElementById('jamLevelMetric');
+
+    // ---- generate base spectrum (signal + noise floor) ----
+    function generateBaseSpectrum() {
+      const spec = new Float32Array(channels);
+      for (let i = 0; i < channels; i++) {
+        // signal peaks at some channels
+        let val = 0.15 + 0.1 * Math.sin(i * 1.7) + 0.05 * Math.cos(i * 0.9);
+        if (i === 2 || i === 7 || i === 10) val += 0.35;
+        if (i === 4 || i === 9) val += 0.2;
+        spec[i] = Math.min(1, Math.max(0.05, val));
+      }
+      return spec;
+    }
+
+    // ---- apply jamming to spectrum ----
+    function applyJamming(base, jamPower) {
+      const jammed = new Float32Array(base);
+      const factor = jamPower / 100; // 0..1
+      // jammer affects all channels, but especially some "target" frequencies
+      for (let i = 0; i < channels; i++) {
+        // broadband noise + selective fading
+        let noise = 0.15 * factor + 0.25 * factor * Math.sin(i * 2.3 + time * 0.5);
+        // strong jammer on channel 6 and 9
+        if (i === 6 || i === 9) noise += 0.5 * factor;
+        if (i === 3 || i === 11) noise += 0.2 * factor;
+        // current channel gets extra protection (hopping gain) 
+        // but jamming still affects it
+        let protection = (i === currentChannel) ? 0.6 : 0.0;
+        let effectiveNoise = noise * (1 - protection * 0.5);
+        jammed[i] = Math.min(1, Math.max(0, base[i] + effectiveNoise - 0.1 * factor));
+      }
+      return jammed;
+    }
+
+    // ---- draw spectrum ----
+    function drawSpectrum() {
+      ctx.clearRect(0, 0, W, H);
+
+      // background
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#0b1a2e');
+      grad.addColorStop(1, '#162b40');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      const barWidth = (W - 60) / channels;
+      const padding = 30;
+      const topMargin = 35;
+      const bottomMargin = 30;
+      const maxHeight = H - topMargin - bottomMargin;
+
+      // draw grid lines
+      ctx.strokeStyle = '#1f3e57';
+      ctx.lineWidth = 0.6;
+      for (let i = 0; i < 5; i++) {
+        const y = topMargin + (i / 4) * maxHeight;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(W - padding, y);
+        ctx.stroke();
+      }
+
+      // draw bars
+      for (let i = 0; i < channels; i++) {
+        const x = padding + i * barWidth + barWidth * 0.1;
+        const w = barWidth * 0.7;
+        const val = Math.min(1, Math.max(0, jammedSpectrum[i] || 0));
+        const height = val * maxHeight;
+        const y = topMargin + maxHeight - height;
+
+        // color based on channel and jamming
+        let hue = 200 + 20 * (i / channels);
+        let sat = 70;
+        let light = 50 + 30 * val;
+        if (i === currentChannel) {
+          // highlight current hopping channel
+          ctx.fillStyle = `hsl(150, 90%, 60%)`;
+          ctx.shadowColor = '#2ecc71';
+          ctx.shadowBlur = 18;
+        } else if (val > 0.7) {
+          ctx.fillStyle = `hsl(30, 90%, 55%)`;
+          ctx.shadowColor = '#e67e22';
+          ctx.shadowBlur = 10;
+        } else {
+          ctx.fillStyle = `hsl(${hue}, ${sat}%, ${light}%)`;
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+        }
+
+        ctx.fillRect(x, y, w, height);
+        ctx.shadowBlur = 0;
+
+        // small indicator for current channel
+        if (i === currentChannel) {
+          ctx.strokeStyle = '#aaffcc';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x - 2, y - 2, w + 4, height + 4);
+        }
+      }
+
+      // frequency labels
+      ctx.fillStyle = '#8bb4d9';
+      ctx.font = '11px monospace';
+      ctx.textAlign = 'center';
+      for (let i = 0; i < channels; i++) {
+        const x = padding + i * barWidth + barWidth / 2;
+        const label = (2400 + i * 25) + 'MHz';
+        ctx.fillText(label, x, H - 8);
+      }
+
+      // channel marker
+      ctx.fillStyle = '#b6d4f0';
+      ctx.font = '12px "Segoe UI", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`⏐ hopping on CH ${currentChannel+1}`, padding + 8, 22);
+    }
+
+    // ---- update spectrum and UI ----
+    function updateSystem() {
+      // base spectrum (signal)
+      const base = generateBaseSpectrum();
+      // apply jamming
+      jammedSpectrum = applyJamming(base, jammerPower);
+      // draw
+      drawSpectrum();
+
+      // update LED / status
+      const jamLevel = jammerPower;
+      const led = document.getElementById('hopLed');
+      const status = document.getElementById('hopStatus');
+      if (jamLevel < 30) {
+        led.className = 'frequency-dot';
+        status.textContent = 'Hopping active · clear';
+      } else if (jamLevel < 65) {
+        led.className = 'frequency-dot jammed';
+        status.textContent = 'Jamming detected · hopping';
+      } else {
+        led.className = 'frequency-dot critical';
+        status.textContent = '⚠️ Severe jamming · hopping';
+      }
+
+      // metrics
+      currentChannelSpan.textContent = currentChannel + 1;
+      jamLevelMetric.textContent = Math.round(jamLevel) + '%';
+    }
+
+    // ---- frequency hop ----
+    function hop() {
+      // select a new channel (avoid staying on same)
+      let newChan;
+      do {
+        newChan = Math.floor(Math.random() * channels);
+      } while (newChan === currentChannel && channels > 1);
+      currentChannel = newChan;
+      updateSystem();
+    }
+
+    // ---- animation loop (simulate hopping rate) ----
+    let lastHopTime = 0;
+    function animate(timestamp) {
+      const elapsed = timestamp - lastHopTime;
+      const hopInterval = 1000 / hopRate; // ms between hops
+      if (elapsed > hopInterval) {
+        hop();
+        lastHopTime = timestamp;
+      }
+      // also slowly drift jammer? no, but we redraw if needed
+      // for continuous update (jamming modulation)
+      if (Math.random() < 0.02) {
+        // small random jitter to spectrum
+        updateSystem();
+      }
+      requestAnimationFrame(animate);
+    }
+
+    // ---- full update (from sliders) ----
+    function fullUpdate() {
+      const jam = parseInt(jammerSlider.value);
+      jammerPower = jam;
+      jammerValue.textContent = jam + '%';
+
+      const rate = parseInt(hopRateSlider.value);
+      hopRate = rate;
+      hopRateValue.textContent = rate;
+
+      updateSystem();
+    }
+
+    // ---- reset ----
+    function resetSystem() {
+      jammerSlider.value = 0;
+      hopRateSlider.value = 8;
+      jammerPower = 0;
+      hopRate = 8;
+      jammerValue.textContent = '0%';
+      hopRateValue.textContent = '8';
+      // reset channel to 4
+      currentChannel = 4;
+      updateSystem();
+    }
+
+    // ---- random jam ----
+    function randomJam() {
+      const j = Math.floor(Math.random() * 85) + 10;
+      const r = Math.floor(Math.random() * 16) + 3;
+      jammerSlider.value = j;
+      hopRateSlider.value = r;
+      jammerPower = j;
+      hopRate = r;
+      jammerValue.textContent = j + '%';
+      hopRateValue.textContent = r;
+      // random channel
+      currentChannel = Math.floor(Math.random() * channels);
+      updateSystem();
+    }
+
+    // ---- init ----
+    function init() {
+      // initial spectrum
+      const base = generateBaseSpectrum();
+      jammedSpectrum = applyJamming(base, 28);
+      currentChannel = 4;
+      updateSystem();
+
+      // event listeners
+      jammerSlider.addEventListener('input', fullUpdate);
+      hopRateSlider.addEventListener('input', fullUpdate);
+
+      document.getElementById('hopNowBtn').addEventListener('click', function() {
+        hop();
+      });
+
+      document.getElementById('resetSpectrumBtn').addEventListener('click', resetSystem);
+
+      document.getElementById('randomJamBtn').addEventListener('click', randomJam);
+
+      // start animation loop
+      requestAnimationFrame(animate);
+    }
+
+    init();
+  })();
+</script>
+</body>
+</html>
