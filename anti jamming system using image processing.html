@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anti‑Jamming · Image Processing</title>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0b1a2e 0%, #1a2f44 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 2.5rem;
+      padding: 2rem 2rem 2.5rem;
+      max-width: 1100px;
+      width: 100%;
+      box-shadow: 0 25px 50px -8px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+      transition: all 0.2s;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    h1 {
+      font-weight: 400;
+      font-size: 2rem;
+      letter-spacing: -0.5px;
+      color: #f0f9ff;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 1rem;
+      margin-bottom: 1.8rem;
+    }
+
+    h1 i {
+      color: #5fc3ff;
+      font-size: 2rem;
+      filter: drop-shadow(0 0 6px #3b9eff);
+    }
+
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 780px) {
+      .grid-2col {
+        grid-template-columns: 1fr;
+        gap: 1.8rem;
+      }
+    }
+
+    /* preview panel */
+    .preview-panel {
+      background: #0f1e2f;
+      border-radius: 1.8rem;
+      padding: 1.2rem;
+      box-shadow: inset 0 6px 12px rgba(0,0,0,0.6), 0 8px 18px rgba(0,0,0,0.3);
+      border: 1px solid #2b4a66;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      background: #0b1725;
+      border-radius: 1.2rem;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      aspect-ratio: 4 / 3;
+      border: 1px solid #2b4a66;
+    }
+
+    #imageCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #0b1725;
+      image-rendering: pixelated;
+    }
+
+    .status-badge {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      padding: 0.3rem 1rem 0.3rem 1.2rem;
+      background: #152b3d;
+      border-radius: 40px;
+      border: 1px solid #2f4d66;
+      color: #c0d9f0;
+    }
+
+    .status-led {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .led {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #3a7a5a;
+      box-shadow: 0 0 8px #2ecc71;
+      transition: 0.2s;
+    }
+
+    .led.warning {
+      background: #c97d3a;
+      box-shadow: 0 0 12px #f39c12;
+    }
+
+    .led.critical {
+      background: #b13e3e;
+      box-shadow: 0 0 16px #e74c3c;
+    }
+
+    .control-panel {
+      background: #122434;
+      border-radius: 1.8rem;
+      padding: 1.5rem 1.8rem;
+      border: 1px solid #2b4a66;
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .control-group label {
+      font-weight: 400;
+      color: #b6d4f0;
+      font-size: 0.9rem;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .control-group label i {
+      color: #5fc3ff;
+      width: 1.2rem;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 10px;
+      background: #1b3950;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #5fc3ff;
+      cursor: pointer;
+      box-shadow: 0 0 12px #2b8cff;
+      border: 2px solid #b0daff;
+    }
+
+    .value-indicator {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #8bb4d9;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 0.3rem;
+    }
+
+    .btn {
+      background: #1e3b52;
+      border: none;
+      color: #e2f0ff;
+      padding: 0.7rem 1.4rem;
+      border-radius: 40px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      transition: 0.15s;
+      border: 1px solid #3a5f7a;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      flex: 1 1 auto;
+      justify-content: center;
+    }
+
+    .btn i {
+      color: #7fc9ff;
+    }
+
+    .btn:hover {
+      background: #264f6b;
+      transform: scale(0.98);
+      border-color: #5d8fb0;
+    }
+
+    .btn-primary {
+      background: #1f6e9e;
+      border-color: #4a9cd6;
+      box-shadow: 0 0 14px #1f6e9e55;
+    }
+
+    .btn-primary i {
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2b7fb3;
+    }
+
+    .metrics {
+      display: flex;
+      justify-content: space-between;
+      background: #0b1b2b;
+      border-radius: 60px;
+      padding: 0.6rem 1.4rem;
+      border: 1px solid #2b4a66;
+      margin-top: 0.2rem;
+    }
+
+    .metric-item {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+      color: #b6d4f0;
+      font-size: 0.9rem;
+    }
+
+    .metric-value {
+      font-weight: 600;
+      color: #ddf0ff;
+      font-size: 1.1rem;
+    }
+
+    .metric-value.jam {
+      color: #f1a15c;
+    }
+
+    .footer-note {
+      text-align: right;
+      font-size: 0.8rem;
+      color: #51748f;
+      margin-top: 1.2rem;
+      border-top: 1px solid #1e3750;
+      padding-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .footer-note i {
+      color: #3f7fa0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="glass-card">
+  <h1>
+    <i class="fas fa-satellite-dish"></i> 
+    Anti‑Jamming · Image Processing
+  </h1>
+
+  <div class="grid-2col">
+    <!-- left: canvas -->
+    <div class="preview-panel">
+      <div class="canvas-wrapper">
+        <canvas id="imageCanvas" width="640" height="480"></canvas>
+      </div>
+      <div class="status-badge">
+        <span class="status-led">
+          <span class="led" id="statusLed"></span>
+          <span id="statusText">Stable</span>
+        </span>
+        <span><i class="fas fa-wave-square" style="color:#5fc3ff;"></i>  jamming detection</span>
+      </div>
+    </div>
+
+    <!-- right: controls -->
+    <div class="control-panel">
+      <div class="control-group">
+        <label><i class="fas fa-sliders-h"></i> Noise injection (jamming simulation)</label>
+        <input type="range" id="noiseSlider" min="0" max="100" value="22">
+        <div class="value-indicator">
+          <span>clear</span>
+          <span id="noiseValue">22%</span>
+          <span>jammed</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label><i class="fas fa-filter"></i> Mitigation strength</label>
+        <input type="range" id="mitigationSlider" min="0" max="100" value="62">
+        <div class="value-indicator">
+          <span>off</span>
+          <span id="mitigationValue">62%</span>
+          <span>max</span>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="applyMitigationBtn"><i class="fas fa-shield-alt"></i> Apply mitigation</button>
+        <button class="btn" id="resetImageBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+        <button class="btn" id="randomJamBtn"><i class="fas fa-random"></i> Random jam</button>
+      </div>
+
+      <div class="metrics">
+        <span class="metric-item"><i class="fas fa-signal"></i> SNR <span class="metric-value" id="snrValue">8.2</span>dB</span>
+        <span class="metric-item"><i class="fas fa-bolt"></i> Jamming <span class="metric-value jam" id="jamLevel">22%</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    <span><i class="fas fa-microchip"></i>  real‑time image‑based anti‑jamming · spectrum analysis</span>
+    <span><i class="fas fa-circle" style="color: #2ecc71; font-size: 0.6rem;"></i>  adaptive filtering</span>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const canvas = document.getElementById('imageCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // --- image data (test pattern: grid + spectrum-like elements) ---
+    const W = 640, H = 480;
+    let imageData = ctx.createImageData(W, H);
+    let originalImageData = null;  // backup for reset
+
+    // UI elements
+    const noiseSlider = document.getElementById('noiseSlider');
+    const mitigationSlider = document.getElementById('mitigationSlider');
+    const noiseValue = document.getElementById('noiseValue');
+    const mitigationValue = document.getElementById('mitigationValue');
+    const statusLed = document.getElementById('statusLed');
+    const statusText = document.getElementById('statusText');
+    const snrValue = document.getElementById('snrValue');
+    const jamLevel = document.getElementById('jamLevel');
+
+    // --- helper: generate base image (spectrum / satellite style) ---
+    function generateBaseImage() {
+      const data = new Uint8ClampedArray(W * H * 4);
+      // background: deep space blue
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const idx = (y * W + x) * 4;
+          // gradient sky
+          const r = 10 + (y / H) * 40;
+          const g = 20 + (y / H) * 60;
+          const b = 60 + (y / H) * 130;
+          data[idx] = r;
+          data[idx+1] = g;
+          data[idx+2] = b;
+          data[idx+3] = 255;
+        }
+      }
+
+      // draw grid (radar / spectrum style)
+      for (let i = 0; i < 12; i++) {
+        const x = i * 55 + 20;
+        for (let y = 0; y < H; y+=2) {
+          if (x < W) {
+            const idx = (y * W + x) * 4;
+            data[idx] = 90; data[idx+1] = 190; data[idx+2] = 255;
+          }
+        }
+      }
+      for (let i = 0; i < 10; i++) {
+        const y = i * 50 + 20;
+        for (let x = 0; x < W; x+=2) {
+          const idx = (y * W + x) * 4;
+          data[idx] = 90; data[idx+1] = 190; data[idx+2] = 255;
+        }
+      }
+
+      // signal "blips" (bright spots)
+      const blips = [[120,80], [400,150], [280,320], [500,400], [70,350], [550,80]];
+      blips.forEach(([cx, cy]) => {
+        for (let dy = -10; dy <= 10; dy++) {
+          for (let dx = -10; dx <= 10; dx++) {
+            const dist = Math.hypot(dx, dy);
+            if (dist > 12) continue;
+            const x = cx + dx, y = cy + dy;
+            if (x < 0 || x >= W || y < 0 || y >= H) continue;
+            const idx = (y * W + x) * 4;
+            const bright = 255 - (dist / 12) * 180;
+            data[idx] = Math.min(255, data[idx] + bright * 0.5);
+            data[idx+1] = Math.min(255, data[idx+1] + bright * 0.3);
+            data[idx+2] = Math.min(255, data[idx+2] + bright);
+          }
+        }
+      });
+
+      // small frequency spikes
+      for (let k = 0; k < 20; k++) {
+        const x = 30 + k * 30;
+        const height = 40 + Math.sin(k * 1.5) * 25 + 20;
+        for (let dy = 0; dy < height; dy++) {
+          const y = H - 30 - dy;
+          if (y < 0) continue;
+          const idx = (y * W + x) * 4;
+          data[idx] = 200; data[idx+1] = 150 + dy * 2; data[idx+2] = 80;
+        }
+      }
+
+      return new ImageData(data, W, H);
+    }
+
+    // --- apply noise (jamming) and mitigation ---
+    function applyNoiseAndMitigation(noisePercent, mitigationPercent) {
+      if (!originalImageData) {
+        // fallback: generate base if not set
+        originalImageData = generateBaseImage();
+      }
+
+      const srcData = originalImageData.data;
+      const outputData = new Uint8ClampedArray(srcData);
+      const noiseFactor = Math.min(100, Math.max(0, noisePercent)) / 100;  // 0..1
+      const mitigationFactor = Math.min(100, Math.max(0, mitigationPercent)) / 100;
+
+      // 1. add noise (simulate jamming) 
+      //    gaussian-like noise + salt&pepper
+      const jammedData = new Uint8ClampedArray(srcData);
+      if (noiseFactor > 0.01) {
+        for (let i = 0; i < jammedData.length; i += 4) {
+          // salt & pepper
+          if (Math.random() < noiseFactor * 0.6) {
+            const val = Math.random() > 0.5 ? 255 : 0;
+            jammedData[i] = val;
+            jammedData[i+1] = val;
+            jammedData[i+2] = val;
+          } else {
+            // gaussian-like
+            const delta = (Math.random() - 0.5) * 2 * noiseFactor * 100;
+            jammedData[i] = Math.min(255, Math.max(0, jammedData[i] + delta));
+            jammedData[i+1] = Math.min(255, Math.max(0, jammedData[i+1] + delta * 0.8));
+            jammedData[i+2] = Math.min(255, Math.max(0, jammedData[i+2] + delta * 0.6));
+          }
+        }
+      }
+
+      // 2. mitigation: spatial smoothing + edge preservation (simple adaptive)
+      //    we apply a weighted average based on mitigation strength
+      const resultData = new Uint8ClampedArray(jammedData);
+      if (mitigationFactor > 0.01) {
+        const kernelSize = 1 + Math.floor(mitigationFactor * 4); // 1..5
+        const half = Math.floor(kernelSize / 2);
+        const weight = 1 / (kernelSize * kernelSize);
+
+        for (let y = half; y < H - half; y++) {
+          for (let x = half; x < W - half; x++) {
+            const idx = (y * W + x) * 4;
+            let r = 0, g = 0, b = 0;
+            let count = 0;
+            for (let dy = -half; dy <= half; dy++) {
+              for (let dx = -half; dx <= half; dx++) {
+                const ny = y + dy, nx = x + dx;
+                const ni = (ny * W + nx) * 4;
+                r += jammedData[ni] * weight;
+                g += jammedData[ni+1] * weight;
+                b += jammedData[ni+2] * weight;
+                count++;
+              }
+            }
+            // mix original & smoothed based on mitigation (stronger smoothing)
+            const mix = Math.min(1, mitigationFactor * 1.2);
+            resultData[idx] = Math.round(jammedData[idx] * (1 - mix) + r * mix);
+            resultData[idx+1] = Math.round(jammedData[idx+1] * (1 - mix) + g * mix);
+            resultData[idx+2] = Math.round(jammedData[idx+2] * (1 - mix) + b * mix);
+          }
+        }
+      } else {
+        // no mitigation: copy jammed
+        for (let i = 0; i < resultData.length; i++) {
+          resultData[i] = jammedData[i];
+        }
+      }
+
+      // update imageData
+      imageData.data.set(resultData);
+      ctx.putImageData(imageData, 0, 0);
+
+      // ---- compute pseudo SNR & jamming level ----
+      let signalPower = 0, noisePower = 0;
+      for (let i = 0; i < resultData.length; i += 4) {
+        const r = resultData[i], g = resultData[i+1], b = resultData[i+2];
+        const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+        signalPower += luminance * luminance;
+        // noise estimated as difference between jammed and original
+        const origR = srcData[i], origG = srcData[i+1], origB = srcData[i+2];
+        const origLum = 0.299 * origR + 0.587 * origG + 0.114 * origB;
+        const diff = luminance - origLum;
+        noisePower += diff * diff;
+      }
+      signalPower = signalPower / (W * H);
+      noisePower = noisePower / (W * H);
+      let snr = 10 * Math.log10((signalPower + 1) / (noisePower + 1));
+      if (snr > 30) snr = 30;
+      if (snr < -5) snr = -5;
+
+      // jamming level: derived from noise + mitigation
+      const rawJam = noiseFactor * 100;
+      const effectiveJam = Math.max(0, rawJam - mitigationFactor * 70);
+      const jamDisplay = Math.min(100, Math.round(effectiveJam));
+
+      // update metrics
+      snrValue.textContent = snr.toFixed(1);
+      jamLevel.textContent = jamDisplay + '%';
+
+      // update status LED
+      const led = document.getElementById('statusLed');
+      const statusText = document.getElementById('statusText');
+      if (jamDisplay < 30) {
+        led.className = 'led';
+        statusText.textContent = 'Stable';
+      } else if (jamDisplay < 65) {
+        led.className = 'led warning';
+        statusText.textContent = 'Jamming detected';
+      } else {
+        led.className = 'led critical';
+        statusText.textContent = '⚠️ Severe jamming';
+      }
+    }
+
+    // --- reset to original image ---
+    function resetToOriginal() {
+      if (!originalImageData) {
+        originalImageData = generateBaseImage();
+      }
+      imageData.data.set(originalImageData.data);
+      ctx.putImageData(imageData, 0, 0);
+      // reset sliders to zero?
+      noiseSlider.value = 0;
+      mitigationSlider.value = 0;
+      noiseValue.textContent = '0%';
+      mitigationValue.textContent = '0%';
+      // update with no noise/mitigation
+      applyNoiseAndMitigation(0, 0);
+    }
+
+    // --- random jam ---
+    function randomJam() {
+      const n = Math.floor(Math.random() * 85) + 10; // 10..95
+      const m = Math.floor(Math.random() * 70) + 10; // 10..80
+      noiseSlider.value = n;
+      mitigationSlider.value = m;
+      noiseValue.textContent = n + '%';
+      mitigationValue.textContent = m + '%';
+      applyNoiseAndMitigation(n, m);
+    }
+
+    // --- initialization ---
+    function init() {
+      originalImageData = generateBaseImage();
+      imageData.data.set(originalImageData.data);
+      ctx.putImageData(imageData, 0, 0);
+      // set default
+      noiseSlider.value = 22;
+      mitigationSlider.value = 62;
+      noiseValue.textContent = '22%';
+      mitigationValue.textContent = '62%';
+      applyNoiseAndMitigation(22, 62);
+
+      // --- event listeners ---
+      noiseSlider.addEventListener('input', function() {
+        const val = parseInt(this.value);
+        noiseValue.textContent = val + '%';
+        const mitVal = parseInt(mitigationSlider.value);
+        applyNoiseAndMitigation(val, mitVal);
+      });
+
+      mitigationSlider.addEventListener('input', function() {
+        const val = parseInt(this.value);
+        mitigationValue.textContent = val + '%';
+        const noiseVal = parseInt(noiseSlider.value);
+        applyNoiseAndMitigation(noiseVal, val);
+      });
+
+      document.getElementById('applyMitigationBtn').addEventListener('click', function() {
+        const n = parseInt(noiseSlider.value);
+        const m = parseInt(mitigationSlider.value);
+        applyNoiseAndMitigation(n, m);
+      });
+
+      document.getElementById('resetImageBtn').addEventListener('click', resetToOriginal);
+
+      document.getElementById('randomJamBtn').addEventListener('click', randomJam);
+    }
+
+    init();
+  })();
+</script>
+</body>
+</html>
