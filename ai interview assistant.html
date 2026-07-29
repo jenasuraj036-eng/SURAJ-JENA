@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Assistant · Project</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f6f9fc 0%, #e9f1f8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .assistant-card {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 20, 40, 0.35), 0 4px 18px rgba(0,0,0,0.05);
+            padding: 2rem 2rem 1.8rem;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        /* header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem 0.5rem;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-left .ai-icon {
+            background: #1a5cff;
+            width: 48px;
+            height: 48px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.7rem;
+            box-shadow: 0 8px 16px -6px rgba(26, 92, 255, 0.3);
+        }
+
+        .header-left h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #0b2b5c, #1a5cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .header-left span {
+            font-weight: 400;
+            color: #2c3e66;
+            background: rgba(26, 92, 255, 0.08);
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            margin-left: 0.5rem;
+            -webkit-text-fill-color: #1f3a6b;
+            border: 1px solid rgba(26, 92, 255, 0.15);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.6rem;
+        }
+
+        .header-actions button {
+            background: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 40px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            font-size: 1.2rem;
+            color: #1f3a6b;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .header-actions button:hover {
+            background: #f0f5fe;
+            box-shadow: 0 6px 14px rgba(26, 92, 255, 0.12);
+            transform: scale(1.02);
+            border-color: #1a5cff40;
+        }
+
+        /* main layout: chat + sidebar */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 1.8rem;
+            margin-top: 0.2rem;
+        }
+
+        @media (max-width: 780px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            .assistant-card {
+                padding: 1.5rem;
+            }
+        }
+
+        /* chat panel */
+        .chat-panel {
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            padding: 1.2rem 1.2rem 0.8rem;
+            border: 1px solid rgba(255,255,255,0.7);
+            box-shadow: inset 0 1px 4px rgba(255,255,255,0.8);
+            display: flex;
+            flex-direction: column;
+            min-height: 460px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 420px;
+            padding-right: 0.3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #b6cae0;
+            border-radius: 20px;
+        }
+
+        .message {
+            display: flex;
+            gap: 0.7rem;
+            align-items: flex-start;
+            animation: fadeSlide 0.25s ease;
+        }
+
+        @keyframes fadeSlide {
+            0% { opacity: 0.4; transform: translateY(6px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .message .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+            font-size: 0.95rem;
+            background: #1a5cff;
+        }
+
+        .message.ai .avatar {
+            background: #0f2b5c;
+        }
+
+        .message.user .avatar {
+            background: #3b6bb0;
+        }
+
+        .bubble {
+            background: white;
+            padding: 0.75rem 1.2rem;
+            border-radius: 1.2rem 1.2rem 1.2rem 0.4rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            max-width: 85%;
+            line-height: 1.5;
+            color: #14273e;
+            border: 1px solid rgba(255,255,255,0.4);
+            font-size: 0.95rem;
+            word-break: break-word;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message.user .bubble {
+            background: #dce7fc;
+            border-radius: 1.2rem 1.2rem 0.4rem 1.2rem;
+            color: #0c1f3a;
+            border: 1px solid rgba(26, 92, 255, 0.1);
+        }
+
+        .timestamp {
+            font-size: 0.65rem;
+            opacity: 0.5;
+            margin-top: 0.2rem;
+            text-align: right;
+        }
+
+        .message.user .timestamp {
+            text-align: left;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.2rem;
+            background: white;
+            padding: 0.4rem 0.4rem 0.4rem 1.2rem;
+            border-radius: 60px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+            border: 1px solid rgba(0,0,0,0.02);
+            backdrop-filter: blur(4px);
+            transition: 0.2s;
+        }
+
+        .input-area:focus-within {
+            border-color: #1a5cff70;
+            box-shadow: 0 4px 18px rgba(26, 92, 255, 0.08);
+        }
+
+        .input-area input {
+            flex: 1;
+            border: none;
+            padding: 0.8rem 0.2rem;
+            font-size: 0.95rem;
+            outline: none;
+            background: transparent;
+            color: #14273e;
+        }
+
+        .input-area input::placeholder {
+            color: #889bb3;
+        }
+
+        .input-area button {
+            background: #1a5cff;
+            border: none;
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 40px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 14px rgba(26, 92, 255, 0.25);
+        }
+
+        .input-area button:hover {
+            background: #0f4ad0;
+            transform: scale(0.97);
+        }
+
+        .input-area button:active {
+            transform: scale(0.92);
+        }
+
+        /* right panel – settings / context */
+        .side-panel {
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            padding: 1.5rem 1.2rem;
+            border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: inset 0 1px 4px rgba(255,255,255,0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 1.8rem;
+        }
+
+        .panel-section h3 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: #3f5b7c;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-section h3 i {
+            font-size: 0.9rem;
+            color: #1a5cff;
+        }
+
+        .badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            background: white;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #14273e;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+            border: 1px solid #dfeaf5;
+        }
+
+        .badge.active {
+            background: #1a5cff;
+            color: white;
+            border-color: #1a5cff;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.3rem 0;
+        }
+
+        .control-item span {
+            font-size: 0.9rem;
+            color: #1f3450;
+        }
+
+        .toggle {
+            width: 38px;
+            height: 22px;
+            background: #cbd8e9;
+            border-radius: 40px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+
+        .toggle.active {
+            background: #1a5cff;
+        }
+
+        .toggle::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 30px;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .toggle.active::after {
+            left: 19px;
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.2rem;
+        }
+
+        .quick-btn {
+            background: white;
+            border: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #1f3450;
+            border: 1px solid #e3edf7;
+            transition: 0.15s;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+        }
+
+        .quick-btn i {
+            color: #1a5cff;
+            width: 1.2rem;
+        }
+
+        .quick-btn:hover {
+            background: #f0f7ff;
+            border-color: #1a5cff70;
+            transform: translateX(3px);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #e3f0e8;
+            padding: 0.25rem 1rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #0f5132;
+        }
+
+        .status-badge i {
+            font-size: 0.5rem;
+            color: #1f9b5e;
+        }
+
+        footer {
+            margin-top: 1.8rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #5d7190;
+            opacity: 0.6;
+            letter-spacing: 0.02em;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 1.2rem;
+        }
+
+        .footer-highlight {
+            color: #1a5cff;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="assistant-card">
+        <!-- header -->
+        <div class="header">
+            <div class="header-left">
+                <div class="ai-icon"><i class="fas fa-robot"></i></div>
+                <h1>InterviewAI</h1>
+                <span>assistant</span>
+            </div>
+            <div class="header-actions">
+                <button title="Clear chat" id="clearChatBtn"><i class="fas fa-eraser"></i></button>
+                <button title="Settings" id="settingsToggle"><i class="fas fa-sliders-h"></i></button>
+            </div>
+        </div>
+
+        <!-- main grid -->
+        <div class="main-grid">
+            <!-- chat panel -->
+            <div class="chat-panel">
+                <div class="chat-messages" id="chatMessages">
+                    <!-- messages will be injected by js -->
+                    <div class="message ai">
+                        <div class="avatar"><i class="fas fa-brain"></i></div>
+                        <div>
+                            <div class="bubble">Hello! I'm your AI interview assistant. Ask me about interview tips, practice questions, or company research.</div>
+                            <div class="timestamp">now</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-area">
+                    <input type="text" id="chatInput" placeholder="Ask something…" autocomplete="off">
+                    <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+
+            <!-- side panel – settings + context -->
+            <div class="side-panel" id="sidePanel">
+                <div class="panel-section">
+                    <h3><i class="fas fa-bolt"></i> Interview mode</h3>
+                    <div class="badge-list">
+                        <span class="badge active"><i class="fas fa-check-circle" style="margin-right: 5px; font-size: 0.7rem;"></i> Behavioral</span>
+                        <span class="badge">Technical</span>
+                        <span class="badge">Case</span>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3><i class="fas fa-sliders-h"></i> Controls</h3>
+                    <div class="control-item">
+                        <span><i class="fas fa-microphone" style="margin-right: 8px; opacity: 0.6;"></i> Voice input</span>
+                        <div class="toggle" id="voiceToggle"></div>
+                    </div>
+                    <div class="control-item">
+                        <span><i class="fas fa-lightbulb" style="margin-right: 8px; opacity: 0.6;"></i> Auto-suggest</span>
+                        <div class="toggle active" id="suggestToggle"></div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3><i class="fas fa-clock"></i> Quick prompts</h3>
+                    <div class="quick-actions">
+                        <button class="quick-btn" data-prompt="Give me 3 common interview questions for a product manager role."><i class="fas fa-list-ul"></i> PM questions</button>
+                        <button class="quick-btn" data-prompt="How to answer 'Tell me about yourself'?"><i class="fas fa-user"></i> Tell me about yourself</button>
+                        <button class="quick-btn" data-prompt="What are the top 5 strengths to mention in an interview?"><i class="fas fa-star"></i> Top strengths</button>
+                    </div>
+                </div>
+
+                <div class="panel-section" style="margin-top: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="status-badge"><i class="fas fa-circle"></i> Active</span>
+                        <span style="font-size: 0.7rem; color: #3f5b7c;"><i class="far fa-file-alt"></i> context: 5 topics</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer>
+            <span>AI Interview Assistant · <span class="footer-highlight">v1.0</span> · ready for your next interview</span>
+        </footer>
+    </div>
+    <script>
+        (function() {
+            const chatMessages = document.getElementById('chatMessages');
+            const chatInput = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const clearBtn = document.getElementById('clearChatBtn');
+            const settingsToggle = document.getElementById('settingsToggle');
+            const sidePanel = document.getElementById('sidePanel');
+            const voiceToggle = document.getElementById('voiceToggle');
+            const suggestToggle = document.getElementById('suggestToggle');
+            const quickBtns = document.querySelectorAll('.quick-btn');
+
+            // --- helper: add message ---
+            function addMessage(text, sender = 'user') {
+                const wrapper = document.createElement('div');
+                wrapper.className = `message ${sender}`;
+
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar';
+                if (sender === 'ai') {
+                    avatar.innerHTML = '<i class="fas fa-brain"></i>';
+                } else {
+                    avatar.innerHTML = '<i class="fas fa-user"></i>';
+                }
+
+                const bubbleDiv = document.createElement('div');
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.textContent = text;
+
+                const time = document.createElement('div');
+                time.className = 'timestamp';
+                const now = new Date();
+                time.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                bubbleDiv.appendChild(bubble);
+                bubbleDiv.appendChild(time);
+                wrapper.appendChild(avatar);
+                wrapper.appendChild(bubbleDiv);
+                chatMessages.appendChild(wrapper);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            // --- AI mock response (simulate) ---
+            function getMockReply(userMessage) {
+                const lower = userMessage.toLowerCase();
+                if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+                    return "Hello! Ready to ace that interview? Ask me anything!";
+                } else if (lower.includes('tell me about yourself')) {
+                    return "The 'Tell me about yourself' question is your chance to tell your professional story. Keep it relevant, focus on your achievements, and connect it to the role. Structure: past → present → future.";
+                } else if (lower.includes('strength') || lower.includes('strengths')) {
+                    return "Top strengths to highlight: adaptability, problem-solving, communication, leadership, and emotional intelligence. Always back them with specific examples.";
+                } else if (lower.includes('pm') || lower.includes('product manager')) {
+                    return "Common PM interview questions: 1) How do you prioritize features? 2) Tell me about a product you improved. 3) How do you handle conflicting stakeholder feedback?";
+                } else if (lower.includes('thank')) {
+                    return "You're welcome! Best of luck with your interview prep — you've got this!";
+                } else {
+                    return "That's a great question. In an interview, it's important to structure your answer clearly. Could you tell me more about the context? I'm here to help.";
+                }
+            }
+
+            // --- send user message ---
+            function handleSend() {
+                const text = chatInput.value.trim();
+                if (!text) return;
+                addMessage(text, 'user');
+                chatInput.value = '';
+                chatInput.focus();
+
+                // Simulate AI thinking
+                setTimeout(() => {
+                    const reply = getMockReply(text);
+                    addMessage(reply, 'ai');
+                }, 300 + Math.random() * 300);
+            }
+
+            // --- event listeners ---
+            sendBtn.addEventListener('click', handleSend);
+            chatInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSend();
+                }
+            });
+
+            // clear chat
+            clearBtn.addEventListener('click', function() {
+                chatMessages.innerHTML = '';
+                // re-add welcome message
+                const welcome = document.createElement('div');
+                welcome.className = 'message ai';
+                welcome.innerHTML = `
+                    <div class="avatar"><i class="fas fa-brain"></i></div>
+                    <div>
+                        <div class="bubble">Hello! I'm your AI interview assistant. Ask me about interview tips, practice questions, or company research.</div>
+                        <div class="timestamp">now</div>
+                    </div>
+                `;
+                chatMessages.appendChild(welcome);
+            });
+
+            // toggle side panel visibility (for mobile / fun)
+            let panelVisible = true;
+            settingsToggle.addEventListener('click', function() {
+                panelVisible = !panelVisible;
+                sidePanel.style.display = panelVisible ? 'flex' : 'none';
+                this.innerHTML = panelVisible ? '<i class="fas fa-sliders-h"></i>' : '<i class="fas fa-sliders-h"></i>';
+            });
+
+            // toggles (voice & suggest)
+            voiceToggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+            suggestToggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+
+            // quick prompt buttons
+            quickBtns.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const prompt = this.getAttribute('data-prompt');
+                    if (prompt) {
+                        chatInput.value = prompt;
+                        handleSend();
+                    }
+                });
+            });
+
+            // click on badges -> change active style (just demo)
+            document.querySelectorAll('.badge').forEach(badge => {
+                badge.addEventListener('click', function() {
+                    document.querySelectorAll('.badge').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // initial focus
+            chatInput.focus();
+
+            // (optional) small extra: toggle active on badges (already done)
+        })();
+    </script>
+</body>
+</html>
