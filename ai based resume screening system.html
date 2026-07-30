@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Screening · SmartHire</title>
+    <!-- Font Awesome Icons (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* header */
+        .header {
+            padding: 1.8rem 2.5rem;
+            background: white;
+            border-bottom: 1px solid #eef2f6;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            background: #2563eb;
+            color: white;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            font-size: 1.6rem;
+            box-shadow: 0 8px 16px -6px rgba(37, 99, 235, 0.25);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 1.6rem;
+            letter-spacing: -0.4px;
+            color: #0b1b33;
+        }
+
+        .logo-text span {
+            color: #2563eb;
+        }
+
+        .badge-ai {
+            background: #e9efff;
+            color: #2563eb;
+            padding: 0.3rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            letter-spacing: 0.3px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .search-wrapper {
+            background: #f1f5f9;
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+
+        .search-wrapper:focus-within {
+            border-color: #2563eb;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .search-wrapper i {
+            color: #6b7a8f;
+            font-size: 0.95rem;
+        }
+
+        .search-wrapper input {
+            border: none;
+            background: transparent;
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+            min-width: 180px;
+            outline: none;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: #f8fafc;
+            padding: 0.4rem 1rem 0.4rem 0.6rem;
+            border-radius: 40px;
+            border: 1px solid #e9edf2;
+        }
+
+        .user-profile img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .user-profile span {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #1e293b;
+        }
+
+        /* main layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 0;
+            background: #fafcff;
+        }
+
+        @media (max-width: 1000px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* left column */
+        .resume-pool {
+            padding: 2rem 2.5rem 2.5rem 2.5rem;
+            background: white;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.8rem;
+            flex-wrap: wrap;
+        }
+
+        .section-title h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0b1b33;
+            letter-spacing: -0.3px;
+        }
+
+        .section-title .badge-count {
+            background: #eef2f6;
+            color: #1e293b;
+            padding: 0.25rem 0.9rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .filter-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 0.8rem;
+            margin-bottom: 2rem;
+        }
+
+        .filter-tabs .tab {
+            background: #f1f5f9;
+            padding: 0.4rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #334155;
+            cursor: default;
+            transition: 0.1s ease;
+            border: 1px solid transparent;
+        }
+
+        .filter-tabs .tab.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+            box-shadow: 0 4px 8px -2px rgba(37, 99, 235, 0.3);
+        }
+
+        .filter-tabs .tab i {
+            margin-right: 0.4rem;
+            font-size: 0.7rem;
+        }
+
+        /* resume cards */
+        .resume-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .resume-card {
+            background: white;
+            border-radius: 1.2rem;
+            padding: 1.2rem 1.5rem;
+            border: 1px solid #e9edf2;
+            transition: 0.15s ease;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+        }
+
+        .resume-card:hover {
+            border-color: #bdd3ff;
+            box-shadow: 0 8px 20px -10px rgba(37, 99, 235, 0.08);
+            background: #fbfdff;
+        }
+
+        .card-left {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        .avatar {
+            width: 52px;
+            height: 52px;
+            background: #e9efff;
+            color: #2563eb;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+
+        .candidate-info h4 {
+            font-weight: 700;
+            color: #0b1b33;
+            font-size: 1.05rem;
+            letter-spacing: -0.2px;
+        }
+
+        .candidate-info .role {
+            font-size: 0.85rem;
+            color: #475569;
+            margin-top: 0.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .candidate-info .role i {
+            color: #6b7a8f;
+            font-size: 0.7rem;
+        }
+
+        .match-badge {
+            background: #e6f7e6;
+            color: #0b6e4f;
+            font-weight: 600;
+            padding: 0.2rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .match-badge i {
+            font-size: 0.65rem;
+        }
+
+        .card-right {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .ai-insight {
+            background: #f1f5f9;
+            padding: 0.25rem 0.9rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: #1e293b;
+        }
+
+        .ai-insight i {
+            color: #2563eb;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #d0d9e6;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: default;
+            transition: 0.1s ease;
+        }
+
+        .btn-outline i {
+            margin-right: 0.3rem;
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #a0b8d4;
+        }
+
+        /* right sidebar */
+        .ai-sidebar {
+            background: #f8fafc;
+            padding: 2rem 1.8rem 2rem 1.8rem;
+            border-left: 1px solid #e9edf2;
+        }
+
+        .ai-sidebar h3 {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #0b1b33;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.8rem;
+        }
+
+        .ai-sidebar h3 i {
+            color: #2563eb;
+            background: white;
+            padding: 0.4rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px -2px rgba(0,0,0,0.02);
+        }
+
+        .insight-box {
+            background: white;
+            border-radius: 1.2rem;
+            padding: 1.5rem 1.2rem;
+            margin-bottom: 1.6rem;
+            border: 1px solid #e9edf2;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+
+        .insight-box .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7a8f;
+            font-weight: 600;
+        }
+
+        .insight-box .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0b1b33;
+            margin: 0.4rem 0 0.2rem;
+        }
+
+        .insight-box .sub {
+            font-size: 0.8rem;
+            color: #475569;
+        }
+
+        .progress-tag {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-top: 0.8rem;
+        }
+
+        .progress-bar-bg {
+            background: #e9edf2;
+            height: 6px;
+            flex: 1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 6px;
+            border-radius: 10px;
+            background: #2563eb;
+            width: 0%;
+        }
+
+        .skill-list {
+            list-style: none;
+            margin-top: 0.8rem;
+        }
+
+        .skill-list li {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .skill-list li:last-child {
+            border: none;
+        }
+
+        .skill-list .skill-name {
+            color: #1e293b;
+        }
+
+        .skill-list .skill-score {
+            font-weight: 600;
+            color: #0b1b33;
+        }
+
+        .shortlist-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.9rem 0;
+            width: 100%;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            box-shadow: 0 8px 18px -8px rgba(37, 99, 235, 0.3);
+            cursor: default;
+            transition: 0.1s ease;
+        }
+
+        .shortlist-btn i {
+            font-size: 1rem;
+        }
+
+        .shortlist-btn:hover {
+            background: #1d4ed8;
+            transform: scale(0.98);
+        }
+
+        .footer-note {
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-align: center;
+            border-top: 1px solid #e9edf2;
+            padding-top: 1.5rem;
+        }
+
+        .footer-note i {
+            color: #2563eb;
+        }
+
+        /* responsiveness */
+        @media (max-width: 700px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.8rem;
+            }
+            .search-wrapper input {
+                min-width: 120px;
+                width: 100%;
+            }
+            .resume-pool {
+                padding: 1.5rem;
+            }
+            .ai-sidebar {
+                padding: 1.5rem;
+                border-left: none;
+                border-top: 1px solid #e9edf2;
+            }
+            .card-left {
+                width: 100%;
+            }
+            .card-right {
+                width: 100%;
+                justify-content: flex-start;
+                margin-top: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- header -->
+        <div class="header">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fas fa-brain"></i></div>
+                <div class="logo-text">Smart<span>Hire</span></div>
+                <span class="badge-ai"><i class="fas fa-robot" style="margin-right:4px;"></i>AI screening</span>
+            </div>
+            <div class="header-actions">
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search candidates, skills...">
+                </div>
+                <div class="user-profile">
+                    <div style="width:36px;height:36px;background:#2563eb;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;">JD</div>
+                    <span>John</span>
+                    <i class="fas fa-chevron-down" style="font-size:0.6rem;color:#6b7a8f;"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- main grid -->
+        <div class="main-grid">
+            <!-- left column: resume pool -->
+            <div class="resume-pool">
+                <div class="section-title">
+                    <h2><i class="fas fa-file-alt" style="color:#2563eb;margin-right:10px;"></i>Resume pool</h2>
+                    <span class="badge-count"><i class="fas fa-users"></i> 124 candidates</span>
+                </div>
+
+                <div class="filter-tabs">
+                    <span class="tab active"><i class="fas fa-star"></i> Top matches</span>
+                    <span class="tab"><i class="fas fa-clock"></i> Recent</span>
+                    <span class="tab"><i class="fas fa-code"></i> Engineering</span>
+                    <span class="tab"><i class="fas fa-chart-line"></i> Marketing</span>
+                    <span class="tab"><i class="fas fa-ellipsis-h"></i> More</span>
+                </div>
+
+                <!-- resume cards -->
+                <div class="resume-list">
+
+                    <!-- card 1 -->
+                    <div class="resume-card">
+                        <div class="card-left">
+                            <div class="avatar">AK</div>
+                            <div class="candidate-info">
+                                <h4>Ananya Krishnan</h4>
+                                <div class="role">
+                                    <span><i class="fas fa-briefcase"></i> Senior ML Engineer</span>
+                                    <span><i class="fas fa-map-pin"></i> Bangalore</span>
+                                    <span class="match-badge"><i class="fas fa-check-circle"></i> 94% match</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-right">
+                            <span class="ai-insight"><i class="fas fa-microchip"></i> AI: Top pick</span>
+                            <span class="btn-outline"><i class="fas fa-robot"></i> Quick screen</span>
+                            <span class="btn-outline"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                    </div>
+
+                    <!-- card 2 -->
+                    <div class="resume-card">
+                        <div class="card-left">
+                            <div class="avatar">RS</div>
+                            <div class="candidate-info">
+                                <h4>Rahul Sharma</h4>
+                                <div class="role">
+                                    <span><i class="fas fa-briefcase"></i> Product Designer</span>
+                                    <span><i class="fas fa-map-pin"></i> Remote</span>
+                                    <span class="match-badge"><i class="fas fa-check-circle"></i> 88% match</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-right">
+                            <span class="ai-insight"><i class="fas fa-lightbulb"></i> Strong portfolio</span>
+                            <span class="btn-outline"><i class="fas fa-robot"></i> Quick screen</span>
+                            <span class="btn-outline"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                    </div>
+
+                    <!-- card 3 -->
+                    <div class="resume-card">
+                        <div class="card-left">
+                            <div class="avatar">MT</div>
+                            <div class="candidate-info">
+                                <h4>Mei Tanaka</h4>
+                                <div class="role">
+                                    <span><i class="fas fa-briefcase"></i> Full Stack Developer</span>
+                                    <span><i class="fas fa-map-pin"></i> Tokyo</span>
+                                    <span class="match-badge"><i class="fas fa-check-circle"></i> 82% match</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-right">
+                            <span class="ai-insight"><i class="fas fa-code"></i> React · Python</span>
+                            <span class="btn-outline"><i class="fas fa-robot"></i> Quick screen</span>
+                            <span class="btn-outline"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                    </div>
+
+                    <!-- card 4 -->
+                    <div class="resume-card">
+                        <div class="card-left">
+                            <div class="avatar">JC</div>
+                            <div class="candidate-info">
+                                <h4>James Chen</h4>
+                                <div class="role">
+                                    <span><i class="fas fa-briefcase"></i> Data Analyst</span>
+                                    <span><i class="fas fa-map-pin"></i> Singapore</span>
+                                    <span class="match-badge"><i class="fas fa-check-circle"></i> 76% match</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-right">
+                            <span class="ai-insight"><i class="fas fa-database"></i> SQL · Tableau</span>
+                            <span class="btn-outline"><i class="fas fa-robot"></i> Quick screen</span>
+                            <span class="btn-outline"><i class="fas fa-chevron-right"></i></span>
+                        </div>
