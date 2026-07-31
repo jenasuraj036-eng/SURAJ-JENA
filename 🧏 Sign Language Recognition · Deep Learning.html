@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<!-- saved from url=(0088)file:///C:/Users/jenas/OneDrive/Desktop/suraj.project/sign%20language%20recognition.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🧏 Sign Language Recognition · Deep Learning</title>
+  <!-- Font Awesome & Google Fonts -->
+  <link rel="stylesheet" href="./🧏 Sign Language Recognition · Deep Learning_files/all.min.css">
+  <link href="./🧏 Sign Language Recognition · Deep Learning_files/css2" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+      padding: 20px;
+    }
+
+    .glass-panel {
+      max-width: 960px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 56px;
+      padding: 32px 30px 40px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.02);
+      transition: 0.2s;
+    }
+
+    /* header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .header h1 {
+      font-weight: 700;
+      font-size: 2rem;
+      color: #f0f9ff;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header h1 i {
+      color: #7dd3fc;
+      font-size: 2.2rem;
+      filter: drop-shadow(0 0 8px #38bdf880);
+    }
+
+    .badge {
+      background: rgba(56, 189, 248, 0.12);
+      padding: 8px 20px;
+      border-radius: 60px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #b8e6ff;
+      font-weight: 500;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(4px);
+    }
+
+    .badge i {
+      color: #7dd3fc;
+    }
+
+    /* main layout: camera + prediction */
+    .recognition-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin: 24px 0 28px;
+    }
+
+    @media (max-width: 700px) {
+      .recognition-area {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+
+    /* camera box */
+    .camera-box {
+      background: #0b1622;
+      border-radius: 36px;
+      overflow: hidden;
+      aspect-ratio: 4 / 3;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      box-shadow: inset 0 8px 20px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .camera-box .placeholder-icon {
+      color: #475569;
+      font-size: 4.8rem;
+      opacity: 0.5;
+      transition: 0.2s;
+    }
+
+    .camera-box .cam-label {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      padding: 6px 22px;
+      border-radius: 60px;
+      color: #cbd5e1;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .camera-box .cam-label i {
+      margin-right: 8px;
+      color: #7dd3fc;
+    }
+
+    /* prediction panel */
+    .prediction-panel {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
+      border-radius: 36px;
+      padding: 24px 22px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .prediction-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #94a3b8;
+      font-weight: 500;
+      font-size: 0.9rem;
+      letter-spacing: 0.3px;
+      margin-bottom: 14px;
+    }
+
+    .prediction-header i {
+      color: #38bdf8;
+      font-size: 1.2rem;
+    }
+
+    .prediction-result {
+      background: #0f1a2b;
+      border-radius: 32px;
+      padding: 28px 18px;
+      text-align: center;
+      border: 1px solid #2d3b4f;
+      box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.3);
+      margin-bottom: 20px;
+    }
+
+    .prediction-symbol {
+      font-size: 4.8rem;
+      font-weight: 700;
+      color: #f0f9ff;
+      line-height: 1.2;
+      letter-spacing: 4px;
+    }
+
+    .prediction-symbol .sub {
+      font-size: 1.4rem;
+      font-weight: 400;
+      color: #94a3b8;
+      display: block;
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
+
+    .confidence-bar {
+      background: #1e2a3a;
+      border-radius: 60px;
+      height: 10px;
+      width: 100%;
+      margin: 12px 0 6px;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 60px;
+      transition: width 0.3s ease;
+    }
+
+    .confidence-label {
+      display: flex;
+      justify-content: space-between;
+      color: #94a3b8;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    /* top predictions list */
+    .top-list {
+      margin-top: 12px;
+    }
+
+    .top-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      color: #cbd5e1;
+      font-size: 0.95rem;
+    }
+
+    .top-item:last-child {
+      border-bottom: none;
+    }
+
+    .top-item .label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .top-item .label i {
+      color: #475569;
+      width: 18px;
+      font-size: 0.9rem;
+    }
+
+    .top-item .prob {
+      background: #1e2d42;
+      padding: 0 14px;
+      border-radius: 60px;
+      font-weight: 600;
+      color: #b8e6ff;
+      font-size: 0.8rem;
+    }
+
+    /* history / action buttons */
+    .history-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 14px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 60px;
+      padding: 12px 18px 12px 24px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .history-badge {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      font-weight: 500;
+      flex-wrap: wrap;
+    }
+
+    .history-badge .sequence {
+      display: flex;
+      gap: 6px;
+    }
+
+    .history-badge .seq-item {
+      background: #1e2d42;
+      padding: 2px 12px;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: transparent;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 8px 18px;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: 0.15s;
+      backdrop-filter: blur(4px);
+    }
+
+    .btn-primary {
+      background: #38bdf8;
+      border: 1px solid #38bdf8;
+      color: #0f172a;
+    }
+
+    .btn-primary:hover {
+      background: #7dd3fc;
+      border-color: #7dd3fc;
+      transform: scale(1.02);
+    }
+
+    .btn-outline {
+      border-color: #475569;
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: #94a3b8;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn i {
+      font-size: 0.9rem;
+    }
+
+    .footnote {
+      margin-top: 28px;
+      text-align: center;
+      color: #475569;
+      font-size: 0.8rem;
+      letter-spacing: 0.3px;
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+      padding-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .footnote span i {
+      margin-right: 6px;
+      color: #38bdf8;
+    }
+
+    /* responsive tweaks */
+    @media (max-width: 480px) {
+      .glass-panel { padding: 20px; }
+      .header h1 { font-size: 1.6rem; }
+      .prediction-symbol { font-size: 3.8rem; }
+      .history-bar { flex-direction: column; align-items: stretch; }
+      .action-group { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glass-panel">
+    <!-- header -->
+    <div class="header">
+      <h1>
+        <i class="fas fa-hands"></i> 
+        SignLens
+      </h1>
+      <div class="badge">
+        <i class="fas fa-microchip"></i> 
+        Deep Learning · CNN + LSTM
+      </div>
+    </div>
+
+    <!-- main recognition area -->
+    <div class="recognition-area">
+      <!-- camera simulation -->
+      <div class="camera-box" id="cameraBox">
+        <i class="fas fa-hand-hand" id="cameraIcon" style="color: rgb(125, 211, 252); opacity: 0.9;"></i>
+        <div class="cam-label">
+          <i class="fas fa-video"></i> live feed · simulated
+        </div>
+      </div>
+
+      <!-- prediction panel -->
+      <div class="prediction-panel">
+        <div class="prediction-header">
+          <i class="fas fa-brain"></i> 
+          <span>real-time inference</span>
+        </div>
+
+        <div class="prediction-result">
+          <div class="prediction-symbol" id="mainSymbol">✋ <span class="sub" id="mainLabel">Stop</span></div>
+          <div class="confidence-bar">
+            <div class="confidence-fill" id="confidenceFill" style="width: 58.4011%;"></div>
+          </div>
+          <div class="confidence-label">
+            <span>confidence</span>
+            <span id="confidenceText">58%</span>
+          </div>
+        </div>
+
+        <!-- top 3 predictions -->
+        <div class="top-list" id="topList"><div class="top-item">
+            <span class="label"><i class="fas fa-hand-peace"></i> Stop</span>
+            <span class="prob">58%</span>
+          </div><div class="top-item">
+            <span class="label"><i class="fas fa-hand-spock"></i> Please</span>
+            <span class="prob">12%</span>
+          </div><div class="top-item">
+            <span class="label"><i class="fas fa-hand-back-fist"></i> Hello</span>
+            <span class="prob">27%</span>
+          </div></div>
+      </div>
+    </div>
+
+    <!-- history + controls -->
+    <div class="history-bar">
+      <div class="history-badge">
+        <i class="fas fa-clock"></i> 
+        <span>recent</span>
+        <div class="sequence" id="sequenceContainer"><span class="seq-item">👋</span><span class="seq-item">👍</span><span class="seq-item">🆘</span><span class="seq-item">🆘</span><span class="seq-item">✋</span></div>
+      </div>
+      <div class="action-group">
+        <button class="btn btn-primary" id="simulateBtn"><i class="fas fa-rotate-right"></i> new frame</button>
+        <button class="btn btn-outline" id="resetBtn"><i class="fas fa-undo-alt"></i> reset</button>
+      </div>
+    </div>
+
+    <div class="footnote">
+      <span><i class="fas fa-database"></i> ASL · 12 classes</span>
+      <span><i class="fas fa-chart-line"></i> accuracy 94.2%</span>
+      <span><i class="fas fa-code"></i> TensorFlow · Keras</span>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // ----- DEEP LEARNING SIMULATION (pretend inference) -----
+      // 12 ASL signs (letters & common words) with icons and labels
+      const SIGN_CLASSES = [
+        { id: 0, label: 'Hello',    icon: '🤟', emoji: '🤟' },
+        { id: 1, label: 'Please',   icon: '🤲', emoji: '🤲' },
+        { id: 2, label: 'Thank you', icon: '🙏', emoji: '🙏' },
+        { id: 3, label: 'Yes',      icon: '👍', emoji: '👍' },
+        { id: 4, label: 'No',       icon: '👎', emoji: '👎' },
+        { id: 5, label: 'Help',     icon: '🆘', emoji: '🆘' },
+        { id: 6, label: 'Love',     icon: '❤️', emoji: '❤️' },
+        { id: 7, label: 'Eat',      icon: '🍽️', emoji: '🍽️' },
+        { id: 8, label: 'Drink',    icon: '🥤', emoji: '🥤' },
+        { id: 9, label: 'More',     icon: '➕', emoji: '➕' },
+        { id: 10, label: 'Stop',    icon: '✋', emoji: '✋' },
+        { id: 11, label: 'Again',   icon: '🔄', emoji: '🔄' }
+      ];
+
+      // DOM elements
+      const mainSymbol = document.getElementById('mainSymbol');
+      const mainLabel = document.getElementById('mainLabel');
+      const confidenceFill = document.getElementById('confidenceFill');
+      const confidenceText = document.getElementById('confidenceText');
+      const topList = document.getElementById('topList');
+      const sequenceContainer = document.getElementById('sequenceContainer');
+      const cameraIcon = document.getElementById('cameraIcon');
+      const simulateBtn = document.getElementById('simulateBtn');
+      const resetBtn = document.getElementById('resetBtn');
+
+      // state
+      let currentPrediction = null;        // { classId, confidence, top3 }
+      let history = [];                   // array of emoji strings (max 5)
+
+      // helper: generate random prediction (simulate deep learning output)
+      function generatePrediction() {
+        // pick a random class as top (with bias toward variety)
+        const topId = Math.floor(Math.random() * SIGN_CLASSES.length);
+        const topClass = SIGN_CLASSES[topId];
+
+        // generate random confidences (sum to 100)
+        let confs = [];
+        let remaining = 100;
+        for (let i = 0; i < 3; i++) {
+          if (i === 2) {
+            confs.push(remaining);
+          } else {
+            let max = Math.min(remaining - 2, 60);
+            let val = Math.floor(Math.random() * max) + 5;
+            if (i === 0) val = Math.floor(Math.random() * 45) + 45; // top confidence 45–90
+            confs.push(val);
+            remaining -= val;
+          }
+        }
+        // ensure top is highest
+        confs[0] = Math.max(confs[0], confs[1] + 5, confs[2] + 5);
+        if (confs[0] > 92) confs[0] = 92;
+        // normalize
+        let sum = confs.reduce((a,b) => a+b, 0);
+        confs = confs.map(c => Math.round((c / sum) * 100));
+        // adjust to sum 100
+        let diff = 100 - confs.reduce((a,b) => a+b, 0);
+        confs[0] += diff;
+        if (confs[0] < 0) confs[0] = 10;
+
+        // pick two other distinct classes
+        let others = [];
+        let available = SIGN_CLASSES.filter((_, idx) => idx !== topId);
+        for (let i = 0; i < 2; i++) {
+          const randIdx = Math.floor(Math.random() * available.length);
+          others.push(available[randIdx]);
+          available.splice(randIdx, 1);
+        }
+
+        const top3 = [
+          { class: topClass, confidence: confs[0] },
+          { class: others[0], confidence: confs[1] },
+          { class: others[1], confidence: confs[2] }
+        ];
+
+        return {
+          classId: topId,
+          topClass: topClass,
+          top3: top3,
+          topConfidence: confs[0]
+        };
+      }
+
+      // update UI with prediction
+      function renderPrediction(pred) {
+        if (!pred) return;
+        const top = pred.top3[0];
+        // main symbol
+        mainSymbol.innerHTML = `${top.class.emoji} <span class="sub" id="mainLabel">${top.class.label}</span>`;
+        // confidence
+        confidenceFill.style.width = `${top.confidence}%`;
+        confidenceText.textContent = `${top.confidence}%`;
+
+        // top 3 list
+        topList.innerHTML = '';
+        pred.top3.forEach((item, index) => {
+          const div = document.createElement('div');
+          div.className = 'top-item';
+          div.innerHTML = `
+            <span class="label"><i class="fas fa-hand-${['peace','spock','back-fist'][index] || 'pointer'}"></i> ${item.class.label}</span>
+            <span class="prob">${item.confidence}%</span>
+          `;
+          topList.appendChild(div);
+        });
+
+        // update camera icon (mimic sign)
+        cameraIcon.className = `fas fa-hand-${['peace','spock','back-fist','point-up','thumbs-down','hand-holding-heart','heart','utensils','glass-whiskey','plus','hand','sync'][pred.classId] || 'peace'}`;
+        cameraIcon.style.color = '#7dd3fc';
+        cameraIcon.style.opacity = '0.9';
+
+        // push to history (emoji)
+        const emoji = top.class.emoji;
+        history.push(emoji);
+        if (history.length > 5) history.shift();
+        updateHistoryUI();
+
+        // store current
+        currentPrediction = pred;
+      }
+
+      // update history chips
+      function updateHistoryUI() {
+        sequenceContainer.innerHTML = history.map(emoji => 
+          `<span class="seq-item">${emoji}</span>`
+        ).join('');
+        if (history.length === 0) {
+          sequenceContainer.innerHTML = `<span class="seq-item" style="opacity:0.4;">—</span>`;
+        }
+      }
+
+      // simulate new inference (called by button or auto)
+      function runInference() {
+        const pred = generatePrediction();
+        renderPrediction(pred);
+      }
+
+      // reset everything
+      function resetAll() {
+        history = [];
+        updateHistoryUI();
+        // set default prediction (Hello)
+        const defaultPred = {
+          classId: 0,
+          topClass: SIGN_CLASSES[0],
+          top3: [
+            { class: SIGN_CLASSES[0], confidence: 87 },
+            { class: SIGN_CLASSES[1], confidence: 9 },
+            { class: SIGN_CLASSES[2], confidence: 4 }
+          ],
+          topConfidence: 87
+        };
+        renderPrediction(defaultPred);
+        // reset camera icon
+        cameraIcon.className = 'fas fa-hand-peace';
+        cameraIcon.style.color = '#475569';
+        cameraIcon.style.opacity = '0.5';
+        // set sequence
+        sequenceContainer.innerHTML = `<span class="seq-item">🤟</span><span class="seq-item">✋</span><span class="seq-item">👋</span>`;
+        history = ['🤟', '✋', '👋'];
+        // update history UI after reset
+        setTimeout(() => updateHistoryUI(), 20);
+      }
+
+      // auto-simulate every 4 seconds (to show dynamic inference)
+      let autoInterval = null;
+      function startAutoSimulate() {
+        if (autoInterval) clearInterval(autoInterval);
+        autoInterval = setInterval(() => {
+          runInference();
+        }, 3800);
+      }
+
+      // ---- init ----
+      function init() {
+        resetAll(); // sets default
+        startAutoSimulate();
+
+        // event listeners
+        simulateBtn.addEventListener('click', () => {
+          runInference();
+          // reset auto timer
+          clearInterval(autoInterval);
+          startAutoSimulate();
+        });
+
+        resetBtn.addEventListener('click', () => {
+          resetAll();
+          clearInterval(autoInterval);
+          startAutoSimulate();
+        });
+
+        // simulate camera "live" feel
+        // random slight changes in confidence
+        setInterval(() => {
+          if (currentPrediction) {
+            // small jitter on confidence (for realism)
+            const newConf = Math.min(96, Math.max(55, currentPrediction.topConfidence + (Math.random() * 6 - 3)));
+            confidenceFill.style.width = `${newConf}%`;
+            confidenceText.textContent = `${Math.round(newConf)}%`;
+            // update top list first item confidence
+            const firstItem = topList.querySelector('.top-item .prob');
+            if (firstItem) {
+              firstItem.textContent = `${Math.round(newConf)}%`;
+            }
+          }
+        }, 2000);
+      }
+
+      init();
+    })();
+  </script>
+
+</body></html>
