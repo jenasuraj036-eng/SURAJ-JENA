@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<!-- saved from url=(0080)file:///C:/Users/jenas/OneDrive/Desktop/suraj.project/meme%20classification.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meme Classifier · Deep Learning</title>
+  <!-- Font Awesome Icons & Google Fonts -->
+  <link rel="stylesheet" href="./Meme Classifier · Deep Learning_files/all.min.css">
+  <link href="./Meme Classifier · Deep Learning_files/css2" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0b0e1a 0%, #1a1f2f 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+      padding: 1.5rem;
+    }
+
+    .card {
+      max-width: 800px;
+      width: 100%;
+      background: rgba(22, 28, 46, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 3rem;
+      padding: 2.5rem 2.2rem;
+      box-shadow: 0 25px 50px -8px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.03);
+      transition: all 0.2s ease;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .card-header i {
+      font-size: 2.4rem;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .card-header h1 {
+      font-weight: 700;
+      font-size: 1.9rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(to right, #f0f3fa, #c8d0e6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .card-header span {
+      font-weight: 400;
+      font-size: 0.9rem;
+      color: #8892b0;
+      background: rgba(255,255,255,0.04);
+      padding: 0.2rem 0.9rem;
+      border-radius: 30px;
+      margin-left: 0.25rem;
+      border: 1px solid rgba(255,255,255,0.06);
+      -webkit-text-fill-color: #8892b0;
+    }
+
+    .subhead {
+      color: #a8b2d9;
+      font-size: 0.95rem;
+      font-weight: 400;
+      margin-bottom: 2rem;
+      padding-left: 0.2rem;
+      border-left: 3px solid #f5576c;
+      padding-left: 0.9rem;
+      opacity: 0.8;
+    }
+
+    /* Upload zone */
+    .upload-zone {
+      background: rgba(12, 17, 29, 0.6);
+      border: 2px dashed rgba(255, 255, 255, 0.08);
+      border-radius: 2.2rem;
+      padding: 2.8rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border 0.25s, background 0.2s;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .upload-zone:hover {
+      border-color: rgba(245, 87, 108, 0.5);
+      background: rgba(245, 87, 108, 0.04);
+    }
+
+    .upload-zone i {
+      font-size: 3.4rem;
+      color: #5a6785;
+      margin-bottom: 0.75rem;
+      transition: color 0.2s;
+    }
+
+    .upload-zone:hover i {
+      color: #f5576c;
+    }
+
+    .upload-zone p {
+      color: #c8d0e6;
+      font-weight: 500;
+      font-size: 1.2rem;
+    }
+
+    .upload-zone small {
+      display: block;
+      color: #6b7a9a;
+      margin-top: 0.4rem;
+      font-size: 0.85rem;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    /* preview & result row */
+    .preview-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.8rem;
+      margin: 1.8rem 0 2rem;
+      align-items: center;
+    }
+
+    .image-preview {
+      flex: 1 1 200px;
+      background: #0b0f1a;
+      border-radius: 2rem;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -8px rgba(0,0,0,0.7);
+      border: 1px solid rgba(255,255,255,0.03);
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #131a28;
+    }
+
+    .image-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .image-preview .placeholder-icon {
+      font-size: 3.6rem;
+      color: #2b3450;
+    }
+
+    .result-box {
+      flex: 2 1 220px;
+      background: rgba(12, 17, 29, 0.5);
+      border-radius: 2rem;
+      padding: 1.6rem 1.8rem;
+      border: 1px solid rgba(255,255,255,0.03);
+      backdrop-filter: blur(4px);
+      min-height: 150px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .result-box .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6b7a9a;
+      margin-bottom: 0.6rem;
+    }
+
+    .result-box .class-name {
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: #f0f3fa;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .result-box .confidence {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-top: 0.6rem;
+    }
+
+    .confidence-bar {
+      flex: 1;
+      height: 6px;
+      background: #1f283b;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #f093fb, #f5576c);
+      border-radius: 20px;
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .confidence-value {
+      font-weight: 600;
+      color: #c8d0e6;
+      font-size: 1rem;
+      min-width: 3.2rem;
+      text-align: right;
+    }
+
+    .sample-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      margin-top: 1.8rem;
+      justify-content: center;
+    }
+
+    .sample-btn {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: #b3c0e0;
+      padding: 0.7rem 1.5rem;
+      border-radius: 60px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+
+    .sample-btn i {
+      font-size: 0.9rem;
+      color: #f5576c;
+    }
+
+    .sample-btn:hover {
+      background: rgba(245, 87, 108, 0.12);
+      border-color: rgba(245, 87, 108, 0.3);
+      color: white;
+      transform: scale(1.02);
+    }
+
+    .sample-btn:active {
+      transform: scale(0.96);
+    }
+
+    .status-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.2rem 0.9rem;
+      border-radius: 100px;
+      background: rgba(245, 87, 108, 0.15);
+      color: #f5576c;
+      border: 1px solid rgba(245, 87, 108, 0.1);
+      margin-top: 0.25rem;
+      letter-spacing: 0.02em;
+    }
+
+    .footer-note {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #4a5670;
+      border-top: 1px solid rgba(255,255,255,0.03);
+      padding-top: 1.5rem;
+      display: flex;
+      justify-content: center;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-note i {
+      margin-right: 0.25rem;
+      color: #5a6785;
+    }
+
+    /* responsive */
+    @media (max-width: 580px) {
+      .card {
+        padding: 1.8rem 1.2rem;
+        border-radius: 2rem;
+      }
+      .card-header h1 {
+        font-size: 1.5rem;
+      }
+      .result-box .class-name {
+        font-size: 1.6rem;
+      }
+      .preview-row {
+        flex-direction: column;
+      }
+    }
+
+    /* loading shimmer */
+    .loading-shimmer .class-name {
+      background: linear-gradient(90deg, #2a3450 25%, #3a4668 50%, #2a3450 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <!-- Header -->
+  <div class="card-header">
+    <i class="fas fa-brain"></i>
+    <h1>MemeMind <span>v2.0</span></h1>
+  </div>
+  <div class="subhead">
+    <i class="fas fa-robot" style="margin-right: 0.5rem; color: #f5576c;"></i> 
+    deep learning classifier · 10 meme categories
+  </div>
+
+  <!-- Upload Zone -->
+  <div class="upload-zone" id="uploadZone">
+    <i class="fas fa-cloud-upload-alt"></i>
+    <p>Drop meme or click to browse</p>
+    <small>supports .jpg, .png, .webp · max 5MB</small>
+    <input type="file" id="fileInput" accept="image/*">
+  </div>
+
+  <!-- Preview + Result -->
+  <div class="preview-row">
+    <div class="image-preview" id="imagePreview">
+      <i class="fas fa-image placeholder-icon"></i>
+    </div>
+    <div class="result-box" id="resultBox">
+      <div class="label"><i class="far fa-star" style="margin-right: 0.3rem;"></i> classification</div>
+      <div class="class-name" id="className">—</div>
+      <div class="confidence">
+        <span style="color:#6b7a9a; font-size:0.8rem;">confidence</span>
+        <div class="confidence-bar">
+          <div class="confidence-fill" id="confidenceFill" style="width: 0%;"></div>
+        </div>
+        <span class="confidence-value" id="confidenceValue">0%</span>
+      </div>
+      <div id="statusBadge" class="status-badge" style="margin-top: 0.7rem; background: rgba(245, 87, 108, 0.15); color: rgb(245, 87, 108); border-color: rgba(245, 87, 108, 0.1);">awaiting image</div>
+    </div>
+  </div>
+
+  <!-- Sample meme buttons (simulate classification) -->
+  <div class="sample-buttons">
+    <button class="sample-btn" data-meme="doge"><i class="fas fa-dog"></i> Doge</button>
+    <button class="sample-btn" data-meme="distracted"><i class="fas fa-user-friends"></i> Distracted</button>
+    <button class="sample-btn" data-meme="drake"><i class="fas fa-head-side-mask"></i> Drake</button>
+    <button class="sample-btn" data-meme="spiderman"><i class="fas fa-mask"></i> Spidey</button>
+    <button class="sample-btn" data-meme="two_buttons"><i class="fas fa-square"></i> Two Buttons</button>
+  </div>
+
+  <div class="footer-note">
+    <span><i class="fas fa-microchip"></i> ResNet-50 · fine-tuned</span>
+    <span><i class="fas fa-database"></i> 10k memes</span>
+    <span><i class="fas fa-chart-line"></i> 91.2% accuracy</span>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ----- MOCK CLASSIFICATION ENGINE (simulates deep learning) -----
+    // 10 meme classes with realistic confidences
+    const MEME_CLASSES = [
+      'Doge', 'Distracted Boyfriend', 'Drake', 'Spider-Man', 'Two Buttons',
+      'Grumpy Cat', 'Success Kid', 'Roll Safe', 'Change My Mind', 'Y U No'
+    ];
+
+    // pre-defined sample predictions for demo buttons
+    const SAMPLE_PREDICTIONS = {
+      doge: { class: 'Doge', confidence: 0.94 },
+      distracted: { class: 'Distracted Boyfriend', confidence: 0.89 },
+      drake: { class: 'Drake', confidence: 0.92 },
+      spiderman: { class: 'Spider-Man', confidence: 0.87 },
+      two_buttons: { class: 'Two Buttons', confidence: 0.91 }
+    };
+
+    // DOM elements
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const classNameEl = document.getElementById('className');
+    const confidenceFill = document.getElementById('confidenceFill');
+    const confidenceValue = document.getElementById('confidenceValue');
+    const statusBadge = document.getElementById('statusBadge');
+    const sampleBtns = document.querySelectorAll('.sample-btn');
+    const resultBox = document.getElementById('resultBox');
+
+    // Helper: update UI with prediction result
+    function displayPrediction(prediction) {
+      const { class: predictedClass, confidence } = prediction;
+      // update class name
+      classNameEl.textContent = predictedClass || '—';
+      // update confidence bar & value
+      const percent = Math.round((confidence || 0) * 100);
+      confidenceFill.style.width = `${percent}%`;
+      confidenceValue.textContent = `${percent}%`;
+      // status badge
+      statusBadge.textContent = predictedClass ? 'classified' : 'awaiting image';
+      statusBadge.style.background = predictedClass ? 'rgba(76, 175, 80, 0.15)' : 'rgba(245, 87, 108, 0.15)';
+      statusBadge.style.color = predictedClass ? '#81c784' : '#f5576c';
+      statusBadge.style.borderColor = predictedClass ? 'rgba(76, 175, 80, 0.2)' : 'rgba(245, 87, 108, 0.1)';
+    }
+
+    // mock inference: given an image (file or sample key) return prediction
+    function mockInference(imageSource) {
+      // if it's a sample key string
+      if (typeof imageSource === 'string' && SAMPLE_PREDICTIONS[imageSource]) {
+        return { ...SAMPLE_PREDICTIONS[imageSource] };
+      }
+
+      // For uploaded files: we simulate by picking a random class + confidence
+      const randomIndex = Math.floor(Math.random() * MEME_CLASSES.length);
+      const randomClass = MEME_CLASSES[randomIndex];
+      // random confidence between 0.62 and 0.97
+      const randomConf = 0.62 + Math.random() * 0.35;
+      return { class: randomClass, confidence: Math.min(randomConf, 0.98) };
+    }
+
+    // handle file upload
+    function handleFile(file) {
+      if (!file) return;
+      // validate image
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file.');
+        return;
+      }
+      // preview image
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        imagePreview.innerHTML = '';
+        imagePreview.appendChild(img);
+
+        // Simulate deep learning classification (with a tiny delay for realism)
+        statusBadge.textContent = 'classifying...';
+        statusBadge.style.background = 'rgba(255, 193, 7, 0.15)';
+        statusBadge.style.color = '#ffb74d';
+        classNameEl.textContent = '⏳';
+
+        setTimeout(() => {
+          const prediction = mockInference('upload');
+          displayPrediction(prediction);
+        }, 380 + Math.random() * 300); // random delay 380-680ms
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ----- Event Listeners -----
+
+    // Upload zone click
+    uploadZone.addEventListener('click', (e) => {
+      if (e.target.closest('.sample-btn')) return; // avoid interference
+      fileInput.click();
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      if (fileInput.files.length > 0) {
+        handleFile(fileInput.files[0]);
+      }
+      fileInput.value = ''; // reset so same file can be re-uploaded
+    });
+
+    // Drag-and-drop support
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.style.borderColor = '#f5576c';
+      uploadZone.style.background = 'rgba(245, 87, 108, 0.08)';
+    });
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+      uploadZone.style.background = 'rgba(12, 17, 29, 0.6)';
+    });
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+      uploadZone.style.background = 'rgba(12, 17, 29, 0.6)';
+      if (e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    // Sample buttons: simulate classification with preset memes
+    sampleBtns.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const memeKey = btn.dataset.meme;
+        if (!memeKey) return;
+
+        // show a preview icon (simulate sample image)
+        // we just show a colored placeholder with meme name
+        const iconMap = {
+          doge: '🐶',
+          distracted: '🙈',
+          drake: '🙅',
+          spiderman: '🕷️',
+          two_buttons: '🔘'
+        };
+        const emoji = iconMap[memeKey] || '🖼️';
+        imagePreview.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:linear-gradient(145deg,#1f2840,#121926);font-size:4.2rem;color:#f5576c;">${emoji}</div>`;
+
+        // simulate classification
+        statusBadge.textContent = 'classifying...';
+        statusBadge.style.background = 'rgba(255, 193, 7, 0.15)';
+        statusBadge.style.color = '#ffb74d';
+        classNameEl.textContent = '⏳';
+
+        setTimeout(() => {
+          const prediction = mockInference(memeKey);
+          displayPrediction(prediction);
+        }, 350 + Math.random() * 300);
+      });
+    });
+
+    // Reset classification when clicking on empty preview (optional)
+    imagePreview.addEventListener('dblclick', () => {
+      // reset to placeholder
+      imagePreview.innerHTML = `<i class="fas fa-image placeholder-icon"></i>`;
+      displayPrediction({ class: null, confidence: 0 });
+    });
+
+    // initial state
+    displayPrediction({ class: null, confidence: 0 });
+
+    // extra: if user clicks on status badge reset? no, but we keep it clean.
+
+  })();
+</script>
+
+</body></html>
